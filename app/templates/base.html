@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title or "TalentForge" }}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#F3F8F4', 100: '#E7F2EA', 200: '#C9E4D1', 300: '#A0CFAE',
+              400: '#6FB086', 500: '#4E8B6C', 600: '#3A7057', 700: '#2F6B4F',
+              800: '#234F3B', 900: '#173428'
+            },
+            offwhite: '#FAF9F5'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body class="bg-offwhite text-brand-900 min-h-screen flex flex-col font-sans">
+  <nav class="bg-white/95 backdrop-blur border-b border-brand-100 px-6 sm:px-10 py-4 flex items-center justify-between sticky top-0 z-50 shadow-xs">
+    <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
+      <a href="/" aria-label="TalentForge home" class="flex items-center">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-11 md:h-12 w-auto object-contain" />
+      </a>
+      
+      <div class="flex items-center gap-6 md:gap-8">
+        <div class="hidden md:flex items-center gap-2 text-base font-semibold text-brand-800">
+          <a href="/student/login" class="px-3.5 py-2 rounded-xl hover:text-brand-950 hover:bg-brand-50 transition">Students</a>
+          <a href="/industry/login" class="px-3.5 py-2 rounded-xl hover:text-brand-950 hover:bg-brand-50 transition">Companies</a>
+          <a href="/mentor/login" class="px-3.5 py-2 rounded-xl hover:text-brand-950 hover:bg-brand-50 transition">Mentors</a>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <a href="/login" class="hidden sm:inline-flex items-center px-4 py-2.5 rounded-xl text-base font-semibold text-brand-800 hover:text-brand-950 hover:bg-brand-50 transition">
+            Log in
+          </a>
+          <a href="/student/register" class="bg-brand-700 hover:bg-brand-800 text-white px-5 py-2.5 rounded-xl font-bold text-base shadow-xs hover:shadow-md transition flex items-center gap-1.5">
+            <span>Get Started</span>
+            <span class="text-sm">&rarr;</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-[1.1fr_.9fr] gap-12 lg:gap-16 items-center">
+      <div class="space-y-6 sm:space-y-8">
+        <p class="text-xs sm:text-sm font-bold tracking-[.2em] uppercase text-brand-600">The bridge between potential and opportunity</p>
+        <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-brand-900 leading-[1.15]">Build skills. Prove them. Find your next move.</h1>
+        <p class="text-base sm:text-xl leading-relaxed text-brand-700 max-w-xl">TalentForge brings students and companies into one practical career workspace: upload a resume, validate the skills you know, prepare with AI interviews, and discover opportunities that fit.</p>
+        <div class="flex flex-col sm:flex-row gap-3.5 pt-2">
+          <a href="/student/register" class="bg-brand-700 text-white px-6 py-3.5 rounded-xl font-semibold hover:bg-brand-800 transition shadow-sm text-center">Start as a student</a>
+          <a href="/industry/register" class="bg-white border border-brand-200 text-brand-800 px-6 py-3.5 rounded-xl font-semibold hover:bg-brand-50 hover:border-brand-300 transition shadow-sm text-center">Hire emerging talent</a>
+        </div>
+        <div class="grid grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-brand-200 max-w-lg">
+          <div><p class="text-2xl sm:text-3xl font-bold text-brand-800">20</p><p class="text-xs sm:text-sm font-medium text-brand-600 mt-1">skill questions</p></div>
+          <div><p class="text-2xl sm:text-3xl font-bold text-brand-800">3</p><p class="text-xs sm:text-sm font-medium text-brand-600 mt-1">pathways to grow</p></div>
+          <div><p class="text-2xl sm:text-3xl font-bold text-brand-800">1</p><p class="text-xs sm:text-sm font-medium text-brand-600 mt-1">career workspace</p></div>
+        </div>
+      </div>
+      <div class="relative mt-4 lg:mt-0">
+        <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85" alt="Students collaborating around a table" class="w-full aspect-[4/3] object-cover rounded-3xl shadow-2xl" />
+        <div class="absolute -bottom-6 left-4 sm:-left-6 md:-left-10 bg-white border border-brand-100 rounded-2xl shadow-xl p-4 sm:p-5 w-56 sm:w-64 max-w-[calc(100%-2rem)]">
+          <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand-500 mb-1">Your readiness</p>
+          <p class="text-3xl sm:text-4xl font-extrabold text-brand-800">82%</p>
+          <div class="h-2.5 bg-brand-100 rounded-full mt-2.5 overflow-hidden">
+            <div class="h-full bg-brand-500 rounded-full w-[82%]"></div>
+          </div>
+          <p class="text-[11px] sm:text-xs font-medium text-brand-600 mt-2.5">Validated from your assessment</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-brand-900 text-white">
+      <div class="max-w-7xl mx-auto px-6 py-24">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+          <p class="text-sm font-bold tracking-[.2em] uppercase text-brand-300">How TalentForge works</p>
+          <h2 class="text-3xl md:text-4xl font-bold mt-4">Three steps to your next opportunity</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-12">
+          <div class="relative">
+            <div class="text-brand-300/20 text-8xl font-black absolute -top-10 -left-4 z-0">01</div>
+            <div class="relative z-10">
+              <h3 class="text-xl font-bold mt-4">Bring your real experience</h3>
+              <p class="text-brand-100 mt-3 leading-relaxed">Your resume becomes a living profile of skills, education, projects, and goals.</p>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="text-brand-300/20 text-8xl font-black absolute -top-10 -left-4 z-0">02</div>
+            <div class="relative z-10">
+              <h3 class="text-xl font-bold mt-4">Turn skills into evidence</h3>
+              <p class="text-brand-100 mt-3 leading-relaxed">A focused MCQ assessment and AI interview practice show where you are ready and where to grow.</p>
+            </div>
+          </div>
+          <div class="relative">
+            <div class="text-brand-300/20 text-8xl font-black absolute -top-10 -left-4 z-0">03</div>
+            <div class="relative z-10">
+              <h3 class="text-xl font-bold mt-4">Meet the right opportunity</h3>
+              <p class="text-brand-100 mt-3 leading-relaxed">Get matched with jobs, internships, apprenticeships, courses, and people who can move you forward.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
+      <div class="order-2 lg:order-1">
+        <p class="text-sm font-bold tracking-[.2em] uppercase text-brand-600">For companies</p>
+        <h2 class="text-4xl lg:text-5xl font-bold text-brand-900 mt-4 leading-tight">Recruit for capability, not just keywords.</h2>
+        <p class="text-xl text-brand-700 leading-relaxed mt-6">Create postings, review validated candidate skills, see interview performance, and build a stronger early-career pipeline with less guesswork.</p>
+        <a href="/industry/register" class="inline-flex items-center gap-2 mt-8 text-brand-700 font-bold hover:text-brand-900 transition text-lg group">
+          Create a company account 
+          <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+        </a>
+      </div>
+      <div class="order-1 lg:order-2">
+        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=85" alt="Company team discussing a project" class="w-full aspect-[4/3] object-cover rounded-3xl shadow-lg" />
+      </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-6 pb-24">
+      <div class="bg-brand-800 text-white rounded-3xl px-8 py-12 md:px-12 md:py-16 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 shadow-xl overflow-hidden relative">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-brand-700 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3"></div>
+        <div class="relative z-10 lg:max-w-2xl">
+          <p class="text-sm font-bold tracking-[.2em] uppercase text-brand-300">For experienced professionals</p>
+          <h2 class="text-3xl md:text-4xl font-bold mt-4 leading-tight">Share what you’ve learned.</h2>
+          <p class="text-brand-100 text-lg mt-4 leading-relaxed">Create a mentor profile, support emerging talent, and help students turn ambition into a practical next step.</p>
+        </div>
+        <div class="relative z-10 flex flex-wrap gap-4 shrink-0">
+          <a href="/mentor/login" class="bg-brand-900/50 hover:bg-brand-900 border border-brand-600 text-white px-6 py-3 rounded-lg font-medium transition backdrop-blur">Mentor login</a>
+          <a href="/mentor/register" class="bg-white text-brand-900 px-6 py-3 rounded-lg font-medium hover:bg-brand-50 transition shadow-sm">Become a mentor</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-brand-100/50 border-t border-brand-100">
+      <div class="max-w-4xl mx-auto px-6 py-20 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-brand-900">A clearer next step starts here.</h2>
+        <p class="text-lg text-brand-700 mt-4 mb-8">Choose the workspace that matches where you are today.</p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <a href="/student/login" class="bg-white border-2 border-brand-200 text-brand-800 px-8 py-3.5 rounded-lg font-semibold hover:border-brand-400 hover:shadow-md transition">Student login</a>
+          <a href="/industry/login" class="bg-brand-700 border-2 border-brand-700 text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-brand-800 hover:border-brand-800 shadow-md transition">Company login</a>
+          <a href="/mentor/login" class="bg-brand-900 border-2 border-brand-900 text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-black hover:border-black shadow-md transition">Mentor login</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-brand-100 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div class="md:col-span-2">
+          <a href="/" aria-label="TalentForge home" class="inline-block mb-6">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-10 w-auto" />
+          </a>
+          <p class="text-brand-600 max-w-sm leading-relaxed">
+            The practical career workspace bringing students, companies, and mentors together to turn potential into opportunity.
+          </p>
+        </div>
+        
+        <div>
+          <h4 class="font-bold text-brand-900 mb-4">Workspaces</h4>
+          <ul class="space-y-3">
+            <li><a href="/student/login" class="text-brand-600 hover:text-brand-900 transition">Students</a></li>
+            <li><a href="/industry/login" class="text-brand-600 hover:text-brand-900 transition">Companies</a></li>
+            <li><a href="/mentor/login" class="text-brand-600 hover:text-brand-900 transition">Mentors</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-brand-900 mb-4">Legal</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-brand-600 hover:text-brand-900 transition">Privacy Policy</a></li>
+            <li><a href="#" class="text-brand-600 hover:text-brand-900 transition">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-brand-100 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-brand-500 text-sm">
+          &copy; 2026 TalentForge. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Dashboard &middot; TalentForge</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/icon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#F0FBF4',100:'#DFF3E6',200:'#BEE7CC',300:'#8FD3A9',400:'#5AB87F',
+               500:'#379E63',600:'#2A8452',700:'#236B44',800:'#1C5236',900:'#123420' },
+      sky:   { 50:'#EEF3FF',100:'#DCE7FF',200:'#B7CCFF',300:'#8CADFF',400:'#5C88FA',
+               500:'#3C68E8',600:'#2C4FCB',700:'#2540A0',800:'#1D3380',900:'#16265E' },
+      sun:   { 50:'#FFFBEA',100:'#FFF3C4',200:'#FCE588',300:'#FADB5F',400:'#F7C948',
+               500:'#F0B429',600:'#DE911D',700:'#CB6E17',800:'#B44D12',900:'#8D2B0B' },
+      ink: '#12211B',
+      offwhite: '#FAF9F5'
+    } } } }
+  </script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body class="bg-offwhite text-ink min-h-screen">
+
+  <div class="flex min-h-screen relative overflow-x-hidden">
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-ink/40 backdrop-blur-xs z-30 lg:hidden transition-opacity"></div>
+
+    <!-- Sidebar (Desktop static / Mobile off-canvas drawer) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 lg:static lg:z-auto w-64 shrink-0 bg-white border-r border-brand-100 min-h-screen flex flex-col px-4 py-6 transition-all duration-300 ease-in-out overflow-y-auto shadow-2xl lg:shadow-none">
+      <div class="px-2 mb-8 flex items-center justify-between">
+        <a href="/" aria-label="TalentForge home"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-10 w-auto object-contain" /></a>
+        <button id="sidebar-close" type="button" aria-label="Close sidebar" title="Close sidebar" class="p-1.5 rounded-lg text-brand-400 hover:text-ink hover:bg-brand-50 transition flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+      <nav class="space-y-1 mb-6">
+        <a href="/dashboard/industry" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Overview</a>
+        <a href="/dashboard/industry/candidates" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Candidates</a>
+        <a href="/dashboard/industry/postings" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Postings</a>
+        <a href="/dashboard/industry/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Courses</a>
+      </nav>
+
+      <p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+      <nav class="space-y-1">
+        <a href="/dashboard/industry/network" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Talent network</a>
+        <a href="/dashboard/industry/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Campus events</a>
+      </nav>
+
+      <div class="mt-auto pt-6 border-t border-brand-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div id="avatar-initial" class="h-8 w-8 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold">I</div>
+          <div>
+            <p id="user-name" class="text-sm font-medium leading-tight truncate max-w-[110px]">&mdash;</p>
+            <p id="role-text" class="text-xs text-brand-400 leading-tight">Recruiter</p>
+          </div>
+        </div>
+        <button id="logout" class="text-xs text-brand-500 hover:text-ink">Log out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0 flex flex-col w-full">
+      <div class="flex items-center px-4 sm:px-8 py-3.5 border-b border-brand-100 bg-white sticky top-0 z-20">
+        <button id="sidebar-toggle" type="button" aria-label="Open sidebar" title="Open sidebar" class="hidden p-2 -ml-1 rounded-xl text-brand-700 hover:text-ink hover:bg-brand-50 transition flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </button>
+
+        <div class="ml-auto flex items-center gap-3 sm:gap-4">
+          <button id="notification-button" type="button" aria-label="Show last 10 notifications" class="relative text-brand-500 hover:text-ink p-1.5 rounded-lg hover:bg-brand-50 transition">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-sun-500"></span>
+          </button>
+          <a href="/profile" aria-label="Open profile" title="Profile" class="h-8 w-8 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold"><span id="avatar-initial-top">I</span></a>
+        </div>
+      </div>
+
+      <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <p id="today-date" class="text-xs font-semibold tracking-wide text-brand-400 uppercase mb-2"></p>
+            <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">Good morning, <span id="greeting-name">there</span> <span class="text-sun-400">&#10022;</span></h1>
+            <p class="text-brand-500 mt-1 text-sm sm:text-base">Your next great hire is closer than you think.</p>
+          </div>
+          <button id="cta-post-job" class="bg-ink text-white text-sm font-medium px-5 py-3 rounded-xl hover:bg-brand-900 transition whitespace-nowrap self-start sm:self-auto">Post a job &rarr;</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white border border-brand-100 rounded-2xl p-5">
+            <p class="text-sm text-brand-500">Open postings</p>
+            <p id="stat-open" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-brand-400 mt-1">Good standing</p>
+          </div>
+          <div class="bg-white border border-brand-100 rounded-2xl p-5">
+            <p class="text-sm text-brand-500">Applications</p>
+            <p id="stat-apps" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-brand-400 mt-1"><span id="stat-shortlisted-sub">0 shortlisted</span></p>
+          </div>
+          <div class="bg-white border border-brand-100 rounded-2xl p-5">
+            <p class="text-sm text-brand-500">Hired</p>
+            <p id="stat-hired" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-brand-400 mt-1">Good standing</p>
+          </div>
+          <div class="bg-sky-700 text-white rounded-2xl p-5">
+            <p class="text-sm text-sky-100">Avg. interview score</p>
+            <p id="stat-avg-interview" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-sky-200 mt-1">Across applicants</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white border border-brand-100 rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold">Hiring funnel</h3>
+                <span class="text-brand-300">&bull;&bull;&bull;</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="relative w-24 h-24 shrink-0">
+                  <div id="conversion-ring" class="w-24 h-24 rounded-full" style="background: conic-gradient(#2A8452 0deg, #DFF3E6 0deg)"></div>
+                  <div class="absolute inset-2 bg-white rounded-full flex flex-col items-center justify-center">
+                    <span id="conversion-num" class="text-xl font-bold">&mdash;</span>
+                    <span class="text-[10px] text-brand-400">hired</span>
+                  </div>
+                </div>
+                <div>
+                  <p class="font-semibold">Applications &rarr; hires</p>
+                  <p class="text-xs text-brand-500 mt-1">Conversion rate across all postings.</p>
+                </div>
+              </div>
+              <div class="mt-4 space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-brand-500">Applications</span><span id="funnel-apps" class="font-medium">&mdash;</span></div>
+                <div class="flex justify-between"><span class="text-brand-500">Shortlisted</span><span id="funnel-shortlisted" class="font-medium">&mdash;</span></div>
+                <div class="flex justify-between"><span class="text-brand-500">Hired</span><span id="funnel-hired" class="font-medium">&mdash;</span></div>
+              </div>
+            </div>
+
+            <div class="bg-sky-700 text-white rounded-2xl p-6 relative overflow-hidden">
+              <div class="absolute -right-8 -bottom-8 h-32 w-32 rounded-full border border-sky-500/40"></div>
+              <p class="text-xs font-semibold tracking-wide text-sky-200 uppercase mb-2 relative">Next best action</p>
+              <h3 id="next-action-title" class="text-xl font-bold mb-2 relative">You're all caught up</h3>
+              <p id="next-action-detail" class="text-sm text-sky-100 mb-4 relative">Nothing needs your attention right now.</p>
+              <a href="/dashboard/industry/candidates" class="relative inline-flex items-center gap-2 bg-white text-sky-800 text-sm font-medium px-4 py-2 rounded-lg hover:bg-sky-50 transition">Review candidates &rarr;</a>
+            </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="activity-dialog" class="hidden fixed inset-0 z-30" role="dialog" aria-modal="true" aria-label="Recent notifications">
+    <button id="activity-backdrop" type="button" aria-label="Close notifications" class="absolute inset-0 bg-ink/25"></button>
+    <section class="relative ml-auto mr-4 sm:mr-8 mt-14 w-[min(24rem,calc(100vw-2rem))] bg-white border border-brand-100 rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-brand-100"><h2 class="font-semibold text-ink">Last 10 notifications</h2><button id="activity-close" type="button" aria-label="Close notifications" class="text-xl leading-none">&times;</button></div>
+      <div id="activity-dialog-content" class="p-5 max-h-[70vh] overflow-y-auto"><p class="text-sm text-brand-600">Loading notifications...</p></div>
+    </section>
+  </div>
+  <button id="chat-launcher" type="button" aria-label="Open TalentForge AI chat" title="Ask TalentForge AI" class="fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-ink text-white shadow-lg hover:bg-brand-900 transition flex items-center justify-center text-xl">&#129302;</button>
+  <div id="chat-dialog" class="hidden fixed bottom-24 right-4 sm:right-6 z-20 w-[min(24rem,calc(100vw-2rem))] bg-white border border-brand-100 rounded-2xl shadow-xl overflow-hidden" role="dialog" aria-label="TalentForge AI chat">
+    <div class="flex items-center justify-between px-5 py-4 bg-ink text-white"><h2 class="font-semibold">Ask TalentForge AI</h2><button id="chat-close" type="button" aria-label="Close chat" class="text-xl leading-none">&times;</button></div>
+    <div id="chat-messages" class="p-4 max-h-64 overflow-y-auto space-y-3"></div>
+    <div class="flex items-center gap-2 p-4 border-t border-brand-100"><input id="chat-input" type="text" placeholder="Ask about postings or applicants…" class="flex-1 text-sm border border-brand-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300" /><button id="chat-send" type="button" aria-label="Send message" class="bg-ink text-white h-9 w-9 rounded-lg flex items-center justify-center hover:bg-brand-900 transition">&rarr;</button></div>
+  </div>
+
+  <script>
+    const token = () => localStorage.getItem("access_token");
+    const authHeaders = () => ({ Authorization: `Bearer ${token()}` });
+    const jsonHeaders = () => ({ ...authHeaders(), "Content-Type": "application/json" });
+
+    // Sidebar Toggle & Close Handlers
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const sidebarClose = document.getElementById("sidebar-close");
+    const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+
+    function setSidebarState(collapsed) {
+      if (!sidebar) return;
+      if (collapsed) {
+        sidebar.classList.add("-translate-x-full", "lg:-ml-64", "opacity-0", "pointer-events-none");
+        sidebar.classList.remove("translate-x-0", "lg:w-64");
+        if (sidebarToggle) sidebarToggle.classList.remove("hidden");
+        if (sidebarBackdrop) sidebarBackdrop.classList.add("hidden");
+        localStorage.setItem("sidebar_collapsed", "true");
+      } else {
+        sidebar.classList.remove("-translate-x-full", "lg:-ml-64", "opacity-0", "pointer-events-none");
+        sidebar.classList.add("translate-x-0", "lg:w-64");
+        if (sidebarToggle) sidebarToggle.classList.add("hidden");
+        if (sidebarBackdrop && window.innerWidth < 1024) sidebarBackdrop.classList.remove("hidden");
+        localStorage.setItem("sidebar_collapsed", "false");
+      }
+    }
+
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener("click", () => {
+        setSidebarState(false);
+      });
+    }
+
+    if (sidebarClose && sidebar) {
+      sidebarClose.addEventListener("click", () => {
+        setSidebarState(true);
+      });
+    }
+
+    if (sidebarBackdrop) {
+      sidebarBackdrop.addEventListener("click", () => {
+        setSidebarState(true);
+      });
+    }
+
+    if (window.innerWidth < 1024) {
+      setSidebarState(true);
+    } else if (localStorage.getItem("sidebar_collapsed") === "true") {
+      setSidebarState(true);
+    } else {
+      setSidebarState(false);
+    }
+
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "/";
+    });
+
+    document.getElementById("today-date").textContent = new Date().toLocaleDateString("en-US", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+    }).toUpperCase();
+
+    function timeAgo(iso) {
+      const diffMs = Date.now() - new Date(iso).getTime();
+      const mins = Math.round(diffMs / 60000);
+      if (mins < 60) return `${mins}m ago`;
+      const hours = Math.round(mins / 60);
+      if (hours < 24) return `${hours}h ago`;
+      return `${Math.round(hours / 24)}d ago`;
+    }
+
+    async function loadMe() {
+      try {
+        const res = await fetch("/api/auth/me", { headers: authHeaders() });
+        if (!res.ok) return;
+        const user = await res.json();
+        const initial = (user.name || "I")[0].toUpperCase();
+        
+        const av1 = document.getElementById("avatar-initial");
+        if (av1) av1.textContent = initial;
+        const av2 = document.getElementById("avatar-initial-top");
+        if (av2) av2.textContent = initial;
+        const un = document.getElementById("user-name");
+        if (un) un.textContent = user.name;
+        const gn = document.getElementById("greeting-name");
+        if (gn) gn.textContent = (user.name || "there").split(" ")[0];
+
+        // Fetch profile to see if user has college/headline
+        const profRes = await fetch("/api/auth/profile", { headers: authHeaders() });
+        if (profRes.ok) {
+          const profData = await profRes.json();
+          const headline = profData.profile?.headline;
+          const roleEl = document.getElementById("role-text");
+          if (roleEl && headline) {
+            roleEl.textContent = headline.length > 25 ? headline.slice(0, 24) + "…" : headline;
+          }
+        }
+      } catch (err) {
+        console.error("loadMe error:", err);
+      }
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch("/api/industry/me/dashboard", { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const funnel = data.funnel || {};
+        const openEl = document.getElementById("stat-open");
+        if (openEl) openEl.textContent = funnel.open_postings ?? 0;
+
+        const appsEl = document.getElementById("stat-apps");
+        if (appsEl) appsEl.textContent = funnel.applications_received ?? 0;
+
+        const shortSubEl = document.getElementById("stat-shortlisted-sub");
+        if (shortSubEl) shortSubEl.textContent = `${funnel.shortlisted ?? 0} shortlisted`;
+
+        const hiredEl = document.getElementById("stat-hired");
+        if (hiredEl) hiredEl.textContent = funnel.hired ?? 0;
+
+        const avgScoreEl = document.getElementById("stat-avg-interview");
+        if (avgScoreEl) avgScoreEl.textContent = `${funnel.avg_interview_score ?? 0}%`;
+
+        const fAppsEl = document.getElementById("funnel-apps");
+        if (fAppsEl) fAppsEl.textContent = funnel.applications_received ?? 0;
+
+        const fShortEl = document.getElementById("funnel-shortlisted");
+        if (fShortEl) fShortEl.textContent = funnel.shortlisted ?? 0;
+
+        const fHiredEl = document.getElementById("funnel-hired");
+        if (fHiredEl) fHiredEl.textContent = funnel.hired ?? 0;
+
+        const convNumEl = document.getElementById("conversion-num");
+        if (convNumEl) convNumEl.textContent = `${data.conversion_rate ?? 0}%`;
+
+        const deg = Math.round((data.conversion_rate || 0) * 3.6);
+        const ringEl = document.getElementById("conversion-ring");
+        if (ringEl) {
+          ringEl.style.background = `conic-gradient(#2A8452 ${deg}deg, #DFF3E6 0deg)`;
+        }
+
+        const action = data.next_best_action;
+        if (action) {
+          const actionTitleEl = document.getElementById("next-action-title");
+          if (actionTitleEl) actionTitleEl.textContent = action.title || "Review candidates";
+          const actionDetailEl = document.getElementById("next-action-detail");
+          if (actionDetailEl) actionDetailEl.textContent = action.detail || "Explore qualified student candidates.";
+        }
+      } catch (err) {
+        console.error("loadDashboard error:", err);
+      }
+    }
+
+    document.getElementById("cta-post-job").addEventListener("click", () => {
+      window.location.href = "/dashboard/industry/postings";
+    });
+
+    function escChatText(v) {
+      return String(v || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+    }
+
+    async function askTalentForge() {
+      const input = document.getElementById("chat-input");
+      const messagesEl = document.getElementById("chat-messages");
+      const question = input.value.trim();
+      if (!question) return;
+
+      messagesEl.innerHTML += `<div class="text-sm text-right"><span class="inline-block bg-ink text-white px-3 py-2 rounded-lg rounded-br-sm max-w-[85%]">${escChatText(question)}</span></div>`;
+      input.value = "";
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      const thinkingId = "thinking-" + Date.now();
+      messagesEl.innerHTML += `<div id="${thinkingId}" class="text-sm"><span class="inline-block bg-brand-50 text-brand-700 px-3 py-2 rounded-lg rounded-bl-sm">Thinking…</span></div>`;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      try {
+        const res = await fetch("/api/industry/ai/ask", {
+          method: "POST", headers: jsonHeaders(),
+          body: JSON.stringify({ question }),
+        });
+        const data = await res.json();
+        const thinkingEl = document.getElementById(thinkingId);
+        if (thinkingEl) {
+          thinkingEl.innerHTML = `<span class="inline-block bg-brand-50 text-brand-800 px-3 py-2 rounded-lg rounded-bl-sm max-w-[85%]">${escChatText(res.ok ? data.answer : (data.error || "Something went wrong."))}</span>`;
+        }
+      } catch (err) {
+        const thinkingEl = document.getElementById(thinkingId);
+        if (thinkingEl) thinkingEl.innerHTML = `<span class="inline-block bg-red-50 text-red-700 px-3 py-2 rounded-lg rounded-bl-sm">Network error. Please try again.</span>`;
+      }
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    document.getElementById("chat-launcher").addEventListener("click", () => document.getElementById("chat-dialog").classList.toggle("hidden"));
+    document.getElementById("chat-close").addEventListener("click", () => document.getElementById("chat-dialog").classList.add("hidden"));
+    document.getElementById("chat-send").addEventListener("click", askTalentForge);
+    document.getElementById("chat-input").addEventListener("keydown", event => { if (event.key === "Enter") askTalentForge(); });
+
+    const activityDialog = document.getElementById("activity-dialog");
+    async function loadNotifications() {
+      const res = await fetch("/api/auth/activity", { headers: authHeaders() });
+      const items = res.ok ? await res.json() : [];
+      document.getElementById("activity-dialog-content").innerHTML = items.length
+        ? items.map(item => `<article class="border-b border-brand-100 last:border-0 pb-3 mb-3 last:pb-0 last:mb-0"><p class="text-sm font-medium">${item.title}</p><p class="text-xs text-brand-600 mt-1">${item.subtitle || ""}</p><time class="block text-[11px] text-brand-400 mt-1">${item.created_at ? new Date(item.created_at).toLocaleString() : ""}</time></article>`).join("")
+        : '<p class="text-sm text-brand-600">No notifications yet.</p>';
+    }
+    document.getElementById("notification-button").addEventListener("click", () => { activityDialog.classList.remove("hidden"); loadNotifications(); });
+    document.getElementById("activity-close").addEventListener("click", () => activityDialog.classList.add("hidden"));
+    document.getElementById("activity-backdrop").addEventListener("click", () => activityDialog.classList.add("hidden"));
+
+    loadMe();
+    loadDashboard();
+  </script>
+</body>
+</html>

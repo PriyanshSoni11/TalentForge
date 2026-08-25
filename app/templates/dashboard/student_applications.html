@@ -1,0 +1,262 @@
+{% extends "dashboard/base_layout.html" %}
+
+{% block page_title %}My Applications · TalentForge{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/student" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
+  <a href="/dashboard/student/roles" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Explore roles</a>
+  <a href="/dashboard/student/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Learning paths</a>
+  <a href="/dashboard/student/portfolio" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My portfolio</a>
+  <a href="/dashboard/student/applications" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-semibold text-sm">Applications</a>
+</nav>
+
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/student/mentors" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Mentors</a>
+  <a href="/dashboard/student/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Company events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+  
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-ink">My Applications</h1>
+      <p class="text-brand-600 mt-1">Track your job applications, verified interview scores, and recruitment status.</p>
+    </div>
+    <a href="/dashboard/student/roles" class="inline-flex items-center gap-2 self-start md:self-auto bg-brand-700 hover:bg-brand-800 text-white font-medium px-5 py-2.5 rounded-xl transition text-sm shadow-sm">
+      <span>Explore Open Roles</span>
+      <span>&rarr;</span>
+    </a>
+  </div>
+
+  <!-- Applications List Container -->
+  <div class="space-y-4" id="applications-grid">
+    <div class="bg-white border border-brand-100 rounded-2xl p-12 text-center shadow-sm">
+      <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-brand-50 mb-3 animate-spin text-brand-600">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <p class="text-brand-700 font-medium">Loading your applications...</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Application Details Modal -->
+<div id="app-modal" class="fixed inset-0 z-50 bg-ink/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+  <div class="bg-white border border-brand-100 rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+    <button onclick="closeAppModal()" class="absolute top-6 right-6 text-brand-400 hover:text-ink text-2xl font-semibold leading-none">&times;</button>
+    
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <span id="modal-app-type" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-brand-50 text-brand-700 border border-brand-200">Internship</span>
+        <span id="modal-app-status-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Submitted</span>
+      </div>
+      <h2 id="modal-app-title" class="text-2xl font-bold text-ink mt-2">Role Title</h2>
+      <p id="modal-app-company" class="text-sm text-brand-600 font-medium">Company Name · Location</p>
+    </div>
+
+    <!-- Application Timeline / Stepper -->
+    <div class="bg-brand-50/70 border border-brand-100 rounded-2xl p-5 space-y-4">
+      <p class="text-xs font-bold uppercase tracking-wider text-brand-500">Application Pipeline</p>
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="p-2.5 rounded-xl bg-white border border-brand-200 font-semibold text-brand-800 shadow-sm">
+          <span class="block text-emerald-600 font-bold mb-0.5">&#10003;</span>
+          <span>1. Applied</span>
+        </div>
+        <div id="step-interview" class="p-2.5 rounded-xl bg-white border border-brand-200 font-semibold text-brand-800 shadow-sm">
+          <span class="block text-emerald-600 font-bold mb-0.5">&#10003;</span>
+          <span>2. AI Interview</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-brand-100/70 border border-brand-300 font-bold text-brand-900 shadow-sm">
+          <span class="block text-brand-700 font-bold mb-0.5">&#9679;</span>
+          <span>3. Team Review</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interview Score Card -->
+    <div id="modal-interview-card" class="bg-sky-50 border border-sky-100 rounded-2xl p-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-sky-600 font-bold uppercase tracking-wider">AI Interview Performance</p>
+        <p id="modal-interview-score-text" class="text-base font-bold text-sky-950 mt-0.5">Overall Score: 84.4% · Passed</p>
+      </div>
+      <span class="h-10 w-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-sm" id="modal-interview-score-badge">84%</span>
+    </div>
+
+    <!-- Description & Required Skills -->
+    <div class="space-y-3">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-brand-400">About the Role</h3>
+      <p id="modal-app-desc" class="text-sm text-brand-700 leading-relaxed"></p>
+      
+      <h3 class="text-xs font-bold uppercase tracking-wider text-brand-400 pt-2">Skills Assessed</h3>
+      <div id="modal-app-skills" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <div class="pt-2 flex justify-end">
+      <button onclick="closeAppModal()" class="bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition">
+        Done
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allApplications = [];
+
+function esc(str) {
+  if (!str) return "";
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+const statusConfig = {
+  "submitted": { label: "Submitted", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: "&#10003;" },
+  "in_review": { label: "In Review", bg: "bg-sky-50", text: "text-sky-700", border: "border-sky-200", icon: "&#128065;" },
+  "interview": { label: "Interview Scheduled", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: "&#128197;" },
+  "accepted": { label: "Offer Extended", bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300", icon: "&#127881;" },
+  "rejected": { label: "Not Selected", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", icon: "&#10005;" }
+};
+
+async function loadApplications() {
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/students/me/dashboard", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    allApplications = data.applications || [];
+    
+    const container = document.getElementById("applications-grid");
+    
+    if (!allApplications.length) {
+      container.innerHTML = `
+        <div class="bg-white border border-brand-100 rounded-2xl p-12 text-center shadow-sm">
+          <div class="h-14 w-14 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-2xl mx-auto mb-4">
+            &#128188;
+          </div>
+          <h2 class="text-lg font-bold text-ink">No Applications Yet</h2>
+          <p class="text-brand-600 text-sm max-w-sm mx-auto mt-1 mb-5">Explore open roles, practice your AI interview, and submit your applications to top companies.</p>
+          <a href="/dashboard/student/roles" class="inline-block bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition shadow-sm">
+            Explore Open Roles &rarr;
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = allApplications.map((app, index) => {
+      const st = statusConfig[app.status] || statusConfig.submitted;
+      const appliedDate = app.created_at 
+        ? new Date(app.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        : "Recently";
+      
+      const typeLabel = app.type ? app.type.charAt(0).toUpperCase() + app.type.slice(1) : "Job";
+
+      return `
+        <div class="bg-white border border-brand-100 hover:border-brand-300 rounded-2xl p-6 shadow-sm transition space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-100">${esc(typeLabel)}</span>
+                <span class="text-xs text-brand-400 font-medium">&#8226;</span>
+                <span class="text-xs text-brand-500 font-medium">${esc(app.location || "Remote")}</span>
+              </div>
+              <h3 class="text-xl font-bold text-ink">${esc(app.job_title)}</h3>
+              <p class="text-sm font-medium text-brand-600 mt-0.5">${esc(app.company)}</p>
+            </div>
+
+            <div class="self-start sm:self-auto flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${st.bg} ${st.text} ${st.border}">
+                <span>${st.icon}</span>
+                <span>${st.label}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-brand-50 text-xs text-brand-500">
+            <div class="flex items-center gap-4">
+              <span>Applied: <strong class="text-brand-700 font-semibold">${appliedDate}</strong></span>
+              ${app.interview_score !== null && app.interview_score !== undefined ? `
+                <span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
+                  <span>AI Score: <strong>${app.interview_score}%</strong></span>
+                  <span class="text-emerald-600">✓</span>
+                </span>
+              ` : ""}
+            </div>
+
+            <button onclick="openAppModal(${index})" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-5 py-2 rounded-xl transition text-xs shadow-sm">
+              View Details &rarr;
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (err) {
+    console.error("Applications load error:", err);
+    document.getElementById("applications-grid").innerHTML = `
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700 font-medium">
+        Failed to load applications. Please refresh the page.
+      </div>
+    `;
+  }
+}
+
+function openAppModal(index) {
+  const app = allApplications[index];
+  if (!app) return;
+
+  const st = statusConfig[app.status] || statusConfig.submitted;
+  document.getElementById("modal-app-type").textContent = app.type ? app.type.toUpperCase() : "ROLE";
+  
+  const statusBadge = document.getElementById("modal-app-status-badge");
+  statusBadge.textContent = st.label;
+  statusBadge.className = `text-xs px-2.5 py-0.5 rounded-full font-bold border ${st.bg} ${st.text} ${st.border}`;
+
+  document.getElementById("modal-app-title").textContent = app.job_title;
+  document.getElementById("modal-app-company").textContent = `${app.company} · ${app.location || "Remote"}`;
+  document.getElementById("modal-app-desc").textContent = app.description || "No specific job description provided.";
+
+  // Skills
+  const skillsEl = document.getElementById("modal-app-skills");
+  skillsEl.innerHTML = (app.required_skills || []).map(s => `
+    <span class="text-xs bg-brand-50 text-brand-700 border border-brand-200 px-2.5 py-1 rounded-lg font-medium">${esc(s)}</span>
+  `).join("") || "<span class='text-xs text-brand-400'>Standard competencies</span>";
+
+  // Score card
+  const scoreCard = document.getElementById("modal-interview-card");
+  if (app.interview_score !== null && app.interview_score !== undefined) {
+    scoreCard.classList.remove("hidden");
+    document.getElementById("modal-interview-score-text").textContent = `Overall Score: ${app.interview_score}% · Verified`;
+    document.getElementById("modal-interview-score-badge").textContent = `${Math.round(app.interview_score)}%`;
+  } else {
+    scoreCard.classList.add("hidden");
+  }
+
+  document.getElementById("app-modal").classList.remove("hidden");
+}
+
+function closeAppModal() {
+  document.getElementById("app-modal").classList.add("hidden");
+}
+
+loadApplications();
+</script>
+{% endblock %}

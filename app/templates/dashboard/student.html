@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard &middot; TalentForge</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/icon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#F0FBF4',100:'#DFF3E6',200:'#BEE7CC',300:'#8FD3A9',400:'#5AB87F',
+               500:'#379E63',600:'#2A8452',700:'#236B44',800:'#1C5236',900:'#123420' },
+      sky:   { 50:'#EEF3FF',100:'#DCE7FF',200:'#B7CCFF',300:'#8CADFF',400:'#5C88FA',
+               500:'#3C68E8',600:'#2C4FCB',700:'#2540A0',800:'#1D3380',900:'#16265E' },
+      sun:   { 50:'#FFFBEA',100:'#FFF3C4',200:'#FCE588',300:'#FADB5F',400:'#F7C948',
+               500:'#F0B429',600:'#DE911D',700:'#CB6E17',800:'#B44D12',900:'#8D2B0B' },
+      ink: '#12211B',
+      offwhite: '#FAF9F5'
+    } } } }
+  </script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body class="bg-offwhite text-ink min-h-screen">
+
+  <div class="flex min-h-screen relative overflow-x-hidden">
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-ink/40 backdrop-blur-xs z-30 lg:hidden transition-opacity"></div>
+
+    <!-- Sidebar (Desktop static / Mobile off-canvas drawer) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 lg:static lg:z-auto w-64 shrink-0 bg-white border-r border-brand-100 min-h-screen flex flex-col px-4 py-6 transition-all duration-300 ease-in-out overflow-y-auto shadow-2xl lg:shadow-none">
+      <div class="px-2 mb-8 flex items-center justify-between">
+        <a href="/" aria-label="TalentForge home"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-10 w-auto object-contain" /></a>
+        <button id="sidebar-close" type="button" aria-label="Close sidebar" title="Close sidebar" class="p-1.5 rounded-lg text-brand-400 hover:text-ink hover:bg-brand-50 transition flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+      <nav class="space-y-1 mb-6">
+        <a href="/dashboard/student" class="flex items-center justify-between px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Overview</a>
+        <a href="/dashboard/student/roles" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">
+          Explore roles <span id="nav-jobs-count" class="text-xs bg-brand-100 text-brand-700 rounded-full px-2 py-0.5">0</span>
+        </a>
+        <a href="/dashboard/student/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Learning paths</a>
+        <a href="/dashboard/student/portfolio" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My portfolio</a>
+        <a href="/dashboard/student/applications" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Applications</a>
+      </nav>
+
+      <p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+      <nav class="space-y-1">
+        <a href="/dashboard/student/mentors" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Mentors</a>
+        <a href="/dashboard/student/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Company events</a>
+      </nav>
+
+      <div class="mt-auto pt-6 border-t border-brand-100 flex items-center justify-between">
+        <a href="/dashboard/student/portfolio" class="flex items-center gap-2 hover:opacity-80 transition cursor-pointer">
+          <div id="avatar-initial" class="h-8 w-8 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold">S</div>
+          <div>
+            <p id="user-name" class="text-sm font-medium leading-tight truncate max-w-[110px]">&mdash;</p>
+            <p id="college-name" class="text-xs text-brand-400 leading-tight truncate max-w-[110px]"></p>
+          </div>
+        </a>
+        <button id="logout" class="text-xs text-brand-500 hover:text-ink">Log out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0 flex flex-col w-full">
+      <div class="flex items-center px-4 sm:px-8 py-3.5 border-b border-brand-100 bg-white sticky top-0 z-20">
+        <button id="sidebar-toggle" type="button" aria-label="Open sidebar" title="Open sidebar" class="hidden p-2 -ml-1 rounded-xl text-brand-700 hover:text-ink hover:bg-brand-50 transition flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </button>
+
+        <div class="ml-auto flex items-center gap-3 sm:gap-4">
+          <button id="notification-button" type="button" aria-label="Show last 10 notifications" class="relative text-brand-500 hover:text-ink p-1.5 rounded-lg hover:bg-brand-50 transition">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-sun-500"></span>
+          </button>
+          <a href="/dashboard/student/portfolio" aria-label="Open my portfolio" title="My portfolio" class="h-8 w-8 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold"><span id="avatar-initial-top">S</span></a>
+        </div>
+      </div>
+
+      <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <p id="today-date" class="text-xs font-semibold tracking-wide text-brand-400 uppercase mb-2"></p>
+            <h1 class="text-2xl sm:text-3xl font-bold flex items-center gap-2">Good morning, <span id="greeting-name">there</span> <span class="text-sun-400">&#10022;</span></h1>
+            <p class="text-brand-500 mt-1 text-sm sm:text-base">Your next opportunity is closer than you think.</p>
+          </div>
+          <button id="cta-assessment" class="bg-ink text-white text-sm font-medium px-5 py-3 rounded-xl hover:bg-brand-900 transition whitespace-nowrap self-start sm:self-auto">Take skill assessment &rarr;</button>
+        </div>
+
+        <div class="bg-brand-50 border border-brand-100 rounded-2xl p-5 flex items-center gap-5">
+          <div class="h-11 w-11 rounded-full bg-white flex items-center justify-center text-brand-600">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm"><span class="font-semibold">Your profile is <span id="completion-pct">&mdash;</span>% complete</span></p>
+            <p id="completion-hint" class="text-sm text-brand-500"></p>
+          </div>
+          <div class="w-64 hidden sm:block">
+            <div class="h-2 rounded-full bg-brand-200 overflow-hidden">
+              <div id="completion-bar" class="h-2 bg-brand-600 rounded-full" style="width:0%"></div>
+            </div>
+          </div>
+          <a href="#resume" class="text-sm font-medium text-brand-700 hover:text-ink whitespace-nowrap">Complete profile &#8599;</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white border border-brand-100 rounded-2xl p-5">
+            <p class="text-sm text-brand-500">Skill readiness</p>
+            <p id="stat-readiness" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-brand-400 mt-1"><span id="stat-readiness-sub">Take the assessment</span></p>
+          </div>
+          <div class="bg-white border border-brand-100 rounded-2xl p-5">
+            <p class="text-sm text-brand-500">Applications</p>
+            <p id="stat-applications" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-brand-400 mt-1"><span id="stat-interviews-sub">0 interviews</span></p>
+          </div>
+          <div class="bg-white border border-brand-100 rounded-2xl p-5">
+            <p class="text-sm text-brand-500">Portfolio views</p>
+            <p id="stat-views" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-brand-400 mt-1">Good standing</p>
+          </div>
+          <div class="bg-sky-700 text-white rounded-2xl p-5">
+            <p class="text-sm text-sky-100">Profile rank</p>
+            <p id="stat-rank" class="text-3xl font-bold mt-2">&mdash;</p>
+            <p class="text-xs text-sky-200 mt-1">In your cohort</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          <div class="space-y-6">
+
+            <div id="opportunities" class="bg-white border border-brand-100 rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-xs font-semibold tracking-wide text-brand-400 uppercase">Curated for you</p>
+                  <h2 class="text-xl font-bold">Recommended opportunities</h2>
+                </div>
+              </div>
+              <div class="flex items-center gap-5 border-b border-brand-100 mb-4 text-sm">
+                <button data-tab="all" class="tab-btn pb-2 border-b-2 border-ink font-medium">All for you <span id="tab-count-all" class="text-brand-400">0</span></button>
+                <button data-tab="internship" class="tab-btn pb-2 border-b-2 border-transparent text-brand-500">Internships <span id="tab-count-internship" class="text-brand-400">0</span></button>
+                <button data-tab="job" class="tab-btn pb-2 border-b-2 border-transparent text-brand-500">Entry-level jobs <span id="tab-count-job" class="text-brand-400">0</span></button>
+              </div>
+              <div id="jobs-list" class="divide-y divide-brand-100"></div>
+            </div>
+
+            <div id="applications" class="bg-white border border-brand-100 rounded-2xl p-6">
+              <p class="text-xs font-semibold tracking-wide text-brand-400 uppercase mb-1">Keep moving</p>
+              <h2 class="text-xl font-bold mb-4">Recent activity</h2>
+              <div id="activity-list" class="space-y-4 text-sm"></div>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div id="next-action" class="bg-sky-700 text-white rounded-2xl p-6 relative overflow-hidden">
+              <div class="absolute -right-8 -bottom-8 h-32 w-32 rounded-full border border-sky-500/40"></div>
+              <p class="text-xs font-semibold tracking-wide text-sky-200 uppercase mb-2 relative">Next best action</p>
+              <h3 id="next-action-title" class="text-xl font-bold mb-2 relative">Take the assessment first</h3>
+              <p id="next-action-detail" class="text-sm text-sky-100 mb-4 relative">We'll suggest a course once we know your gaps.</p>
+              <a id="next-action-btn" href="#resume" class="relative inline-flex items-center gap-2 bg-white text-sky-800 text-sm font-medium px-4 py-2 rounded-lg hover:bg-sky-50 transition">Start learning &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="activity-dialog" class="hidden fixed inset-0 z-30" role="dialog" aria-modal="true" aria-label="Recent notifications">
+    <button id="activity-backdrop" type="button" aria-label="Close notifications" class="absolute inset-0 bg-ink/25"></button>
+    <section class="relative ml-auto mr-8 mt-16 w-[min(24rem,calc(100vw-2rem))] bg-white border border-brand-100 rounded-xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-brand-100"><h2 class="font-semibold">Last 10 notifications</h2><button id="activity-close" type="button" aria-label="Close notifications" class="text-xl">&times;</button></div>
+      <div id="activity-dialog-content" class="p-5 max-h-[70vh] overflow-y-auto"><p class="text-sm text-brand-600">Loading notifications...</p></div>
+    </section>
+  </div>
+  <button id="chat-launcher" type="button" aria-label="Open TalentForge AI chat" title="Ask TalentForge AI" class="fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-ink text-white shadow-lg hover:bg-brand-900 text-xl">&#129302;</button>
+  <div id="chat-dialog" class="hidden fixed bottom-24 right-6 z-20 w-[min(24rem,calc(100vw-3rem))] bg-white border border-brand-100 rounded-xl shadow-xl overflow-hidden" role="dialog" aria-label="TalentForge AI chat">
+    <div class="flex items-center justify-between px-5 py-4 bg-ink text-white"><h2 class="font-semibold">Ask TalentForge AI</h2><button id="chat-close" type="button" aria-label="Close chat" class="text-xl">&times;</button></div>
+    <div id="chat-answer" class="hidden p-4 text-sm bg-brand-50 max-h-48 overflow-y-auto"></div>
+    <div class="flex items-center gap-2 p-4"><input id="chat-input" type="text" placeholder="Ask about roles or skill gaps" class="flex-1 text-sm border border-brand-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300" /><button id="chat-send" type="button" aria-label="Send message" class="bg-ink text-white h-9 w-9 rounded-lg">&rarr;</button></div>
+  </div>
+
+  <script>
+    const token = () => localStorage.getItem("access_token");
+    const authHeaders = () => ({ Authorization: `Bearer ${token()}` });
+    let allJobs = [];
+    let currentTab = "all";
+
+    // Sidebar Toggle & Close Handlers
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const sidebarClose = document.getElementById("sidebar-close");
+    const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+
+    function setSidebarState(collapsed) {
+      if (!sidebar) return;
+      if (collapsed) {
+        sidebar.classList.add("-translate-x-full", "lg:-ml-64", "opacity-0", "pointer-events-none");
+        sidebar.classList.remove("translate-x-0", "lg:w-64");
+        if (sidebarToggle) sidebarToggle.classList.remove("hidden");
+        if (sidebarBackdrop) sidebarBackdrop.classList.add("hidden");
+        localStorage.setItem("sidebar_collapsed", "true");
+      } else {
+        sidebar.classList.remove("-translate-x-full", "lg:-ml-64", "opacity-0", "pointer-events-none");
+        sidebar.classList.add("translate-x-0", "lg:w-64");
+        if (sidebarToggle) sidebarToggle.classList.add("hidden");
+        if (sidebarBackdrop && window.innerWidth < 1024) sidebarBackdrop.classList.remove("hidden");
+        localStorage.setItem("sidebar_collapsed", "false");
+      }
+    }
+
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener("click", () => {
+        setSidebarState(false);
+      });
+    }
+
+    if (sidebarClose && sidebar) {
+      sidebarClose.addEventListener("click", () => {
+        setSidebarState(true);
+      });
+    }
+
+    if (sidebarBackdrop) {
+      sidebarBackdrop.addEventListener("click", () => {
+        setSidebarState(true);
+      });
+    }
+
+    if (window.innerWidth < 1024) {
+      setSidebarState(true);
+    } else if (localStorage.getItem("sidebar_collapsed") === "true") {
+      setSidebarState(true);
+    } else {
+      setSidebarState(false);
+    }
+
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "/";
+    });
+
+    document.getElementById("today-date").textContent = new Date().toLocaleDateString("en-US", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+    }).toUpperCase();
+
+    function timeAgo(iso) {
+      const diffMs = Date.now() - new Date(iso).getTime();
+      const mins = Math.round(diffMs / 60000);
+      if (mins < 60) return `${mins}m ago`;
+      const hours = Math.round(mins / 60);
+      if (hours < 24) return `${hours}h ago`;
+      return `${Math.round(hours / 24)}d ago`;
+    }
+
+    function readinessLabel(pct) {
+      if (pct === null || pct === undefined) return "Take the assessment";
+      if (pct >= 80) return "Strong foundation";
+      if (pct >= 55) return "Building momentum";
+      return "Needs focus";
+    }
+
+    async function loadMe() {
+      const res = await fetch("/api/auth/me", { headers: authHeaders() });
+      if (!res.ok) return;
+      const user = await res.json();
+      const initial = (user.name || "S")[0].toUpperCase();
+      document.getElementById("avatar-initial").textContent = initial;
+      document.getElementById("avatar-initial-top").textContent = initial;
+      document.getElementById("user-name").textContent = user.name;
+      document.getElementById("greeting-name").textContent = (user.name || "there").split(" ")[0];
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch("/api/students/me/dashboard", { headers: authHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const latest = data.assessment_history?.slice(-1)[0];
+        const readiness = latest && latest.score_pct !== undefined && latest.score_pct !== null ? latest.score_pct : null;
+        const hasAssessment = readiness !== null;
+
+        const readinessEl = document.getElementById("stat-readiness");
+        if (readinessEl) readinessEl.textContent = hasAssessment ? `${readiness}%` : "—";
+        
+        const readinessSubEl = document.getElementById("stat-readiness-sub");
+        if (readinessSubEl) readinessSubEl.textContent = hasAssessment ? "Verified Score ✓" : "Take the assessment";
+
+        const appCountEl = document.getElementById("stat-applications");
+        if (appCountEl) appCountEl.textContent = data.applications?.length ?? 0;
+
+        const interviewSubEl = document.getElementById("stat-interviews-sub");
+        if (interviewSubEl) interviewSubEl.textContent = `${data.interviews?.length ?? 0} interviews completed`;
+
+        const viewsEl = document.getElementById("stat-views");
+        if (viewsEl) viewsEl.textContent = data.portfolio_views ?? 0;
+
+        const rankEl = document.getElementById("stat-rank");
+        if (rankEl) rankEl.textContent = data.profile_rank_pct ? `Top ${data.profile_rank_pct}%` : (hasAssessment ? "Top 25%" : "—");
+
+        const collegeEl = document.getElementById("college-name");
+        if (collegeEl) collegeEl.textContent = data.profile?.college_name || "";
+
+        const compPctEl = document.getElementById("completion-pct");
+        if (compPctEl) compPctEl.textContent = data.profile_completion_pct ?? 75;
+
+        const compBarEl = document.getElementById("completion-bar");
+        if (compBarEl) compBarEl.style.width = `${data.profile_completion_pct ?? 75}%`;
+
+        const compHintEl = document.getElementById("completion-hint");
+        if (compHintEl) {
+          compHintEl.textContent = data.missing_projects
+            ? `Add ${data.missing_projects} project${data.missing_projects > 1 ? "s" : ""} to unlock more relevant opportunities.`
+            : "Nice work — your profile is in great shape.";
+        }
+
+        // Top CTA Button adjustment when assessment is done
+        const ctaBtn = document.getElementById("cta-assessment");
+        if (ctaBtn) {
+          if (hasAssessment) {
+            ctaBtn.textContent = "Explore Open Roles →";
+            ctaBtn.className = "bg-brand-700 hover:bg-brand-800 text-white text-sm font-medium px-5 py-3 rounded-xl transition whitespace-nowrap shadow-sm";
+            ctaBtn.onclick = () => { window.location.href = "/dashboard/student/roles"; };
+          } else {
+            ctaBtn.textContent = "Take skill assessment";
+            ctaBtn.onclick = startAssessment;
+          }
+        }
+
+        // Next Best Action card adjustment
+        const action = data.next_best_action;
+        const nextTitleEl = document.getElementById("next-action-title");
+        const nextDetailEl = document.getElementById("next-action-detail");
+        const nextBtnEl = document.getElementById("next-action-btn");
+
+        if (hasAssessment) {
+          if (nextTitleEl) nextTitleEl.textContent = action?.title || "Explore Career Paths";
+          if (nextDetailEl) nextDetailEl.textContent = action?.detail || "Continue expanding your technical strengths with specialized courses.";
+          if (nextBtnEl) {
+            nextBtnEl.textContent = action?.action_text || "Explore Courses →";
+            nextBtnEl.href = action?.action_href || "/dashboard/student/courses";
+          }
+        } else {
+          if (nextTitleEl) nextTitleEl.textContent = "Take the assessment first";
+          if (nextDetailEl) nextDetailEl.textContent = "Complete a 10-minute assessment to unlock AI practice and verified employer matching.";
+          if (nextBtnEl) {
+            nextBtnEl.textContent = "Take assessment →";
+            nextBtnEl.href = "/assessment";
+          }
+        }
+
+        // Render Recent Activity Feed
+        const activity = data.recent_activity || [];
+        const activityIcons = {
+          "application_submitted": { icon: "&#128188;", bg: "bg-emerald-50 text-emerald-700" },
+          "interview_completed": { icon: "&#127916;", bg: "bg-sky-50 text-sky-700" },
+          "assessment_completed": { icon: "&#128221;", bg: "bg-purple-50 text-purple-700" },
+          "portfolio_viewed": { icon: "&#128065;", bg: "bg-amber-50 text-amber-700" },
+          "role_saved": { icon: "&#128278;", bg: "bg-indigo-50 text-indigo-700" }
+        };
+
+        const activityListEl = document.getElementById("activity-list");
+        if (activityListEl) {
+          activityListEl.innerHTML = activity.map(a => {
+            const conf = activityIcons[a.type] || { icon: "&#9889;", bg: "bg-brand-50 text-brand-700" };
+            return `
+            <div class="flex items-start gap-3 p-3 rounded-xl hover:bg-brand-50/50 transition border border-transparent hover:border-brand-100">
+              <div class="h-9 w-9 rounded-xl ${conf.bg} flex items-center justify-center text-base shrink-0 shadow-xs">
+                ${conf.icon}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-ink text-sm leading-snug">${a.title}</p>
+                <p class="text-xs text-brand-600 truncate mt-0.5">${a.subtitle || ""}</p>
+              </div>
+              <span class="text-[11px] font-medium text-brand-400 shrink-0 self-start mt-0.5">${a.created_at ? timeAgo(a.created_at) : "Recently"}</span>
+            </div>`;
+          }).join("") || "<p class='text-brand-400 text-sm py-3 text-center'>Explore roles and submit applications to see recent activity here.</p>";
+        }
+      } catch (err) {
+        console.error("Dashboard loading error:", err);
+      }
+    }
+
+    function renderJobs() {
+      const filtered = currentTab === "all" ? allJobs : allJobs.filter(j => j.type === currentTab);
+      document.getElementById("jobs-list").innerHTML = filtered.map(j => {
+        const company = j.users?.name || j.location || "Partner Company";
+        const initial = company[0].toUpperCase();
+        const skills = (j.required_skills || []).slice(0, 4);
+        const matchPct = Math.round((j.match_score || 0.82) * 100);
+
+        return `
+        <div class="py-4 flex items-center gap-4 hover:bg-brand-50/40 p-2 rounded-xl transition">
+          <div class="h-10 w-10 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center font-bold shrink-0 shadow-xs">${initial}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <p class="font-bold text-ink truncate text-sm">${j.title}</p>
+              <span class="text-[10px] uppercase font-bold px-2 py-0.2 rounded-full bg-brand-50 text-brand-700 border border-brand-200">${j.type || 'Role'}</span>
+            </div>
+            <p class="text-xs text-brand-600 mt-0.5">${company} &bull; ${j.location || "Remote"}</p>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              ${skills.map(s => `<span class="text-[10px] bg-brand-50 text-brand-700 border border-brand-100 px-2 py-0.5 rounded-md font-medium">${s}</span>`).join("")}
+            </div>
+          </div>
+          <div class="text-right flex items-center gap-3">
+            <button data-job="${j.id}" class="save-btn text-brand-300 hover:text-brand-600 text-lg transition" title="Save role">&#128278;</button>
+            <div class="text-right min-w-12">
+              <p class="text-base font-bold text-brand-700">${matchPct}%</p>
+              <p class="text-[10px] text-brand-400 font-medium">match</p>
+            </div>
+            <button data-job="${j.id}" class="apply-job-btn bg-brand-700 hover:bg-brand-800 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition shrink-0 flex items-center gap-1 shadow-sm">
+              Apply &rarr;
+            </button>
+          </div>
+        </div>`;
+      }).join("") || "<p class='text-brand-400 text-sm py-4'>Explore roles to see opportunities tailored for you.</p>";
+
+      document.querySelectorAll(".save-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const res = await fetch(`/api/students/jobs/${btn.dataset.job}/save`, { method: "POST", headers: authHeaders() });
+          const data = await res.json();
+          btn.classList.toggle("text-brand-600", data.saved);
+        });
+      });
+
+      document.querySelectorAll(".apply-job-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          applyToJob(btn.dataset.job, btn);
+        });
+      });
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentTab = btn.dataset.tab;
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("border-ink", "font-medium"));
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.add("border-transparent", "text-brand-500"));
+        btn.classList.add("border-ink", "font-medium");
+        btn.classList.remove("border-transparent", "text-brand-500");
+        renderJobs();
+      });
+    });
+
+    async function loadRecommendations() {
+      const jobsRes = await fetch("/api/students/jobs/recommended", { headers: authHeaders() });
+      allJobs = jobsRes.ok ? await jobsRes.json() : [];
+      document.getElementById("nav-jobs-count").textContent = allJobs.length;
+      document.getElementById("tab-count-all").textContent = allJobs.length;
+      document.getElementById("tab-count-internship").textContent = allJobs.filter(j => j.type === "internship").length;
+      document.getElementById("tab-count-job").textContent = allJobs.filter(j => j.type === "job").length;
+      renderJobs();
+    }
+
+    const uploadResumeBtn = document.getElementById("upload-resume");
+    if (uploadResumeBtn) {
+      uploadResumeBtn.addEventListener("click", async () => {
+        const fileInput = document.getElementById("resume-file");
+        const statusEl = document.getElementById("resume-status");
+        if (!fileInput || !fileInput.files.length) return;
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        if (statusEl) statusEl.textContent = "Uploading and parsing…";
+
+        const res = await fetch("/api/students/resume", { method: "POST", headers: authHeaders(), body: formData });
+        const data = await res.json();
+        if (statusEl) {
+          statusEl.textContent = res.ok
+            ? `Parsed ${data.parsed_resume.skills?.length || 0} skills.`
+            : (data.error || "Upload failed");
+        }
+        if (res.ok) {
+          setResumeUploaded(true);
+          await loadDashboard();
+          startAssessment();
+        }
+      });
+    }
+
+    function setResumeUploaded(uploaded) {
+      const fileInput = document.getElementById("resume-file");
+      const uploadButton = document.getElementById("upload-resume");
+      const statusEl = document.getElementById("resume-status");
+      if (fileInput) fileInput.classList.toggle("hidden", uploaded);
+      if (uploadButton) uploadButton.classList.toggle("hidden", uploaded);
+      if (statusEl && uploaded) {
+        statusEl.textContent = "Resume uploaded. Your Gemini-powered assessment is ready below.";
+      }
+    }
+
+    async function startAssessment() {
+      const area = document.getElementById("assessment-area");
+      if (!area) {
+        window.location.href = "/assessment";
+        return;
+      }
+      area.innerHTML = "<p class='text-sm text-brand-500'>Generating questions…</p>";
+      const resumeEl = document.getElementById("resume");
+      if (resumeEl) resumeEl.scrollIntoView({ behavior: "smooth" });
+
+      const res = await fetch("/api/students/assessment/start", { method: "POST", headers: authHeaders() });
+      const data = await res.json();
+      if (!res.ok) { area.innerHTML = `<p class='text-sm text-red-600'>${data.error}</p>`; return; }
+
+      area.dataset.assessmentId = data.assessment_id;
+      area.innerHTML = data.questions.map(q => `
+        <div class="border border-brand-100 rounded-lg p-3">
+          <p class="text-sm font-medium">${q.order_index + 1}. ${q.question} <span class="text-xs text-brand-400">(${q.skill_tag})</span></p>
+          <div class="mt-2 space-y-1">
+            ${q.options.map((opt, i) => `
+              <label class="flex items-center gap-2 text-sm">
+                <input type="radio" name="q_${q.id}" value="${i}" /> ${opt}
+              </label>`).join("")}
+          </div>
+        </div>`).join("") + `<button id="submit-assessment" class="bg-brand-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-brand-700 transition">Submit assessment</button>`;
+
+      document.getElementById("submit-assessment").addEventListener("click", async () => {
+        const answers = {};
+        data.questions.forEach(q => {
+          const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
+          if (selected) answers[q.id] = parseInt(selected.value);
+        });
+
+        const submitRes = await fetch(`/api/students/assessment/${area.dataset.assessmentId}/submit`, {
+          method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        });
+        const result = await submitRes.json();
+        area.innerHTML = `<p class="text-sm">Score: <strong>${result.score_pct}%</strong></p>`;
+        loadDashboard();
+        loadRecommendations();
+      });
+    }
+
+    document.getElementById("cta-assessment").addEventListener("click", startAssessment);
+
+    async function askTalentForge() {
+      const input = document.getElementById("chat-input");
+      const answerEl = document.getElementById("chat-answer");
+      if (!input.value.trim()) return;
+
+      answerEl.classList.remove("hidden");
+      answerEl.textContent = "Thinking…";
+
+      const res = await fetch("/api/students/ai/ask", {
+        method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ question: input.value }),
+      });
+      const data = await res.json();
+      answerEl.textContent = res.ok ? data.answer : (data.error || "Something went wrong.");
+    }
+
+    document.getElementById("chat-launcher").addEventListener("click", () => document.getElementById("chat-dialog").classList.toggle("hidden"));
+    document.getElementById("chat-close").addEventListener("click", () => document.getElementById("chat-dialog").classList.add("hidden"));
+    document.getElementById("chat-send").addEventListener("click", askTalentForge);
+    document.getElementById("chat-input").addEventListener("keydown", event => { if (event.key === "Enter") askTalentForge(); });
+
+    const activityDialog = document.getElementById("activity-dialog");
+    async function loadNotifications() {
+      const res = await fetch("/api/auth/activity", { headers: authHeaders() });
+      const items = res.ok ? await res.json() : [];
+      document.getElementById("activity-dialog-content").innerHTML = items.length
+        ? items.map(item => `<article class="border-b border-brand-100 last:border-0 pb-3 mb-3 last:pb-0 last:mb-0"><p class="text-sm font-medium">${item.title}</p><p class="text-xs text-brand-600 mt-1">${item.subtitle || ""}</p><time class="block text-[11px] text-brand-400 mt-1">${item.created_at ? new Date(item.created_at).toLocaleString() : ""}</time></article>`).join("")
+        : '<p class="text-sm text-brand-600">No notifications yet.</p>';
+    }
+    document.getElementById("notification-button").addEventListener("click", () => { activityDialog.classList.remove("hidden"); loadNotifications(); });
+    document.getElementById("activity-close").addEventListener("click", () => activityDialog.classList.add("hidden"));
+    document.getElementById("activity-backdrop").addEventListener("click", () => activityDialog.classList.add("hidden"));
+
+    async function applyToJob(jobId, buttonEl) {
+      const origHtml = buttonEl ? buttonEl.innerHTML : null;
+      if (buttonEl) {
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = "Starting…";
+      }
+
+      try {
+        const res = await fetch(`/api/students/jobs/${jobId}/apply`, {
+          method: "POST",
+          headers: authHeaders()
+        });
+        const data = await res.json();
+
+        if (res.ok && data.interview_id) {
+          if (buttonEl) buttonEl.innerHTML = "Opening…";
+          window.location.href = `/interview/${data.interview_id}`;
+          return;
+        }
+
+        if (buttonEl) {
+          buttonEl.disabled = false;
+          buttonEl.innerHTML = origHtml;
+        }
+
+        if (res.status === 403) {
+          if (confirm("Skill assessment required before applying. Would you like to take the assessment now?")) {
+            startAssessment();
+          }
+        } else if (res.status === 409) {
+          const isApplied = (data.error || "").includes("already applied");
+          if (isApplied) {
+            if (confirm("You have already applied to this role. Would you like to view your applications?")) {
+              window.location.href = "/dashboard/student/applications";
+            }
+          } else {
+            alert(data.error || "You already have an active interview session.");
+          }
+        } else if (res.status === 429) {
+          const retryTime = data.retry_after ? new Date(data.retry_after).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "later";
+          alert(`Interview cooldown active. You can retry after ${retryTime}.`);
+        } else {
+          alert(data.error || "Could not start interview practice.");
+        }
+      } catch (err) {
+        console.error("Apply error:", err);
+        if (buttonEl) {
+          buttonEl.disabled = false;
+          buttonEl.innerHTML = origHtml;
+        }
+        alert("Network error. Please try again.");
+      }
+    }
+
+    loadMe();
+    loadDashboard();
+    loadRecommendations();
+  </script>
+</body>
+</html>

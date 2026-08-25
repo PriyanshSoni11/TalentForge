@@ -1,0 +1,286 @@
+{% extends "dashboard/base_layout.html" %}
+
+{% block page_title %}My Portfolio · TalentForge{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/student" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
+  <a href="/dashboard/student/roles" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Explore roles</a>
+  <a href="/dashboard/student/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Learning paths</a>
+  <a href="/dashboard/student/portfolio" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">My portfolio</a>
+  <a href="/dashboard/student/applications" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Applications</a>
+</nav>
+
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/student/mentors" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Mentors</a>
+  <a href="/dashboard/student/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Company events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-bold mb-2">My Portfolio</h1>
+    <p class="text-brand-600">Showcase your resume, skills, and projects to recruiters.</p>
+  </div>
+
+  <!-- Profile Header -->
+  <div class="bg-ink text-white rounded-2xl p-6">
+    <div class="flex items-center gap-4">
+      <div id="portfolio-avatar" class="h-14 w-14 rounded-full bg-brand-600 text-white flex items-center justify-center text-xl font-bold shrink-0">S</div>
+      <div>
+        <p id="portfolio-name" class="text-2xl font-bold">Loading profile...</p>
+        <p id="portfolio-email" class="text-sm text-brand-200 mt-1"></p>
+        <p id="portfolio-college" class="text-sm text-brand-300 mt-0.5"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resume Section -->
+  <div class="bg-white border border-brand-100 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Resume</h2>
+          <a id="resume-download" href="#" target="_blank" class="hidden text-sm text-brand-600 hover:text-brand-800 font-medium">View current resume ↗</a>
+        </div>
+        <div id="resume-section" class="space-y-4">
+          <div id="resume-placeholder" class="text-center py-8">
+            <svg class="h-12 w-12 text-brand-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p id="resume-label" class="text-brand-600 font-medium">No resume uploaded yet</p>
+            <p id="resume-sublabel" class="text-sm text-brand-400 mt-1">Upload a PDF or DOCX to auto-detect your skills and experience.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="upload-resume-btn" class="bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 transition text-sm font-medium">
+              Upload Resume
+            </button>
+            <button id="replace-resume-btn" class="hidden border border-brand-200 text-brand-700 px-4 py-2 rounded-lg hover:bg-brand-50 transition text-sm font-medium">
+              Replace Resume
+            </button>
+          </div>
+          <div id="upload-status" class="hidden text-sm"></div>
+        </div>
+        <input type="file" id="resume-file" accept=".pdf,.docx,.doc" style="display: none;">
+  </div>
+
+  <!-- Portfolio Stats -->
+  <div class="grid lg:grid-cols-3 gap-6">
+      <div class="bg-white border border-brand-100 rounded-2xl p-6">
+        <p class="text-sm text-brand-500 font-medium">Portfolio Views</p>
+        <p class="text-3xl font-bold mt-2" id="portfolio-views">0</p>
+        <p class="text-xs text-brand-400 mt-1">Times recruiters viewed your profile</p>
+      </div>
+      <div class="bg-sky-50 border border-sky-200 rounded-2xl p-6">
+        <p class="text-sm text-sky-600 font-medium">Applications</p>
+        <p class="text-3xl font-bold mt-2" id="app-count">0</p>
+        <p class="text-xs text-sky-500 mt-1">Submitted applications</p>
+      </div>
+      <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6">
+        <p class="text-sm text-brand-600 font-medium">Assessment Score</p>
+        <p class="text-3xl font-bold mt-2" id="assessment-score">&mdash;</p>
+        <p class="text-xs text-brand-400 mt-1">Latest skill readiness</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Validated Skills Section -->
+  <div class="bg-white border border-brand-100 rounded-2xl p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold">Skills</h2>
+      <div class="flex gap-4">
+        <div>
+          <span class="text-xs text-brand-400 uppercase font-semibold">Strengths</span>
+          <span id="strengths-count" class="ml-1 text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">0</span>
+        </div>
+        <div>
+          <span class="text-xs text-brand-400 uppercase font-semibold">Weaknesses</span>
+          <span id="weaknesses-count" class="ml-1 text-xs bg-sun-100 text-sun-700 px-2 py-0.5 rounded-full">0</span>
+        </div>
+      </div>
+    </div>
+    <div id="skills-section" class="flex flex-wrap gap-2">
+      <p class="text-brand-600">No skills identified yet. Upload a resume to auto-detect your skills.</p>
+    </div>
+  </div>
+
+  <!-- Experience, Education, Projects -->
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="bg-white border border-brand-100 rounded-2xl p-6">
+      <h2 class="font-semibold mb-3">Experience</h2>
+      <div id="experience-section" class="space-y-3 text-sm text-brand-600">Not available yet.</div>
+    </div>
+    <div class="bg-white border border-brand-100 rounded-2xl p-6">
+      <h2 class="font-semibold mb-3">Education</h2>
+      <div id="education-section" class="space-y-3 text-sm text-brand-600">Not available yet.</div>
+    </div>
+    <div class="bg-white border border-brand-100 rounded-2xl p-6">
+      <h2 class="font-semibold mb-3">Projects</h2>
+      <div id="projects-section" class="space-y-3 text-sm text-brand-600">Not available yet.</div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const authHeaders = () => ({ "Authorization": `Bearer ${accessToken}` });
+
+function escHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+// Upload resume button triggers file picker
+document.getElementById("upload-resume-btn").addEventListener("click", () => {
+  document.getElementById("resume-file").click();
+});
+document.getElementById("replace-resume-btn").addEventListener("click", () => {
+  document.getElementById("resume-file").click();
+});
+
+// Handle file selection and upload
+document.getElementById("resume-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById("upload-status");
+  statusEl.classList.remove("hidden");
+  statusEl.className = "text-sm text-brand-600";
+  statusEl.textContent = "Uploading and parsing resume…";
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/students/resume", {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData,
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      statusEl.className = "text-sm text-brand-600";
+      statusEl.textContent = `Resume updated! Detected ${data.parsed_resume?.skills?.length || 0} skills.`;
+      // Refresh portfolio data to show updated information
+      await loadPortfolioData();
+    } else {
+      statusEl.className = "text-sm text-red-600";
+      statusEl.textContent = data.error || "Failed to upload resume";
+    }
+  } catch (err) {
+    console.error("Upload failed:", err);
+    statusEl.className = "text-sm text-red-600";
+    statusEl.textContent = "Error uploading resume. Please try again.";
+  }
+
+  // Reset file input for re-upload
+  e.target.value = "";
+});
+
+function renderExperience(items) {
+  if (!Array.isArray(items) || items.length === 0) return "No experience listed yet.";
+  return items.map(exp => `
+    <div class="border-l-2 border-brand-200 pl-3">
+      <p class="font-medium text-ink">${escHtml(exp.role || exp)}</p>
+      ${exp.company ? `<p class="text-brand-500">${escHtml(exp.company)}</p>` : ""}
+      ${exp.duration ? `<p class="text-xs text-brand-400">${escHtml(exp.duration)}</p>` : ""}
+    </div>
+  `).join("");
+}
+
+function renderEducation(items) {
+  if (!Array.isArray(items) || items.length === 0) return "No education listed yet.";
+  return items.map(edu => `
+    <div class="border-l-2 border-sky-200 pl-3">
+      <p class="font-medium text-ink">${escHtml(edu.degree || edu)}</p>
+      ${edu.institution ? `<p class="text-brand-500">${escHtml(edu.institution)}</p>` : ""}
+      ${edu.year ? `<p class="text-xs text-brand-400">${escHtml(edu.year)}</p>` : ""}
+    </div>
+  `).join("");
+}
+
+function renderProjects(items) {
+  if (!Array.isArray(items) || items.length === 0) return "No projects listed yet.";
+  return items.map(proj => `
+    <div class="border-l-2 border-sun-200 pl-3">
+      <p class="font-medium text-ink">${escHtml(proj.name || proj)}</p>
+      ${proj.description ? `<p class="text-brand-500 text-xs mt-0.5">${escHtml(proj.description)}</p>` : ""}
+      ${proj.tech && proj.tech.length ? `<div class="flex flex-wrap gap-1 mt-1">${proj.tech.map(t => `<span class="text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded">${escHtml(t)}</span>`).join("")}</div>` : ""}
+    </div>
+  `).join("");
+}
+
+async function loadPortfolioData() {
+  try {
+    const headers = authHeaders();
+    const [dashboardRes, profileRes] = await Promise.all([
+      fetch("/api/students/me/dashboard", { headers }),
+      fetch("/api/auth/profile", { headers }),
+    ]);
+    const data = await dashboardRes.json();
+    const profileData = await profileRes.json();
+
+    // Profile header
+    if (profileRes.ok) {
+      const name = profileData.user.name || "Student";
+      document.getElementById("portfolio-name").textContent = name;
+      document.getElementById("portfolio-email").textContent = profileData.user.email || "";
+      document.getElementById("portfolio-college").textContent = profileData.profile?.college_name || "";
+      document.getElementById("portfolio-avatar").textContent = name[0].toUpperCase();
+    }
+
+    // Resume section
+    const resumeUrl = data.profile?.resume_url;
+    if (resumeUrl) {
+      document.getElementById("resume-label").textContent = "Resume uploaded and parsed successfully.";
+      document.getElementById("resume-sublabel").textContent = "Upload a new file to replace the current resume.";
+      document.getElementById("upload-resume-btn").classList.add("hidden");
+      document.getElementById("replace-resume-btn").classList.remove("hidden");
+      document.getElementById("resume-download").href = resumeUrl;
+      document.getElementById("resume-download").classList.remove("hidden");
+    }
+
+    // Stats
+    document.getElementById("portfolio-views").textContent = data.portfolio_views || 0;
+    document.getElementById("app-count").textContent = data.applications?.length || 0;
+
+    const latestAssessment = data.assessment_history?.slice(-1)[0];
+    document.getElementById("assessment-score").textContent =
+      latestAssessment?.score_pct != null ? `${latestAssessment.score_pct}%` : "—";
+
+    // Skills - read from profile.parsed_resume (the fix!)
+    const parsed = data.profile?.parsed_resume;
+    const validatedSkills = data.profile?.validated_skills || [];
+    const strengths = data.profile?.strengths || [];
+    const weaknesses = data.profile?.weaknesses || [];
+
+    document.getElementById("strengths-count").textContent = strengths.length;
+    document.getElementById("weaknesses-count").textContent = weaknesses.length;
+
+    if (parsed && parsed.skills && parsed.skills.length) {
+      const skillsSection = document.getElementById("skills-section");
+      skillsSection.innerHTML = parsed.skills.map(skill => {
+        const isValidated = validatedSkills.some(v => v.toLowerCase() === skill.toLowerCase());
+        const isWeak = weaknesses.some(w => w.toLowerCase() === skill.toLowerCase());
+        const bgClass = isValidated ? "bg-brand-100 text-brand-800 border border-brand-200"
+                      : isWeak ? "bg-sun-50 text-sun-800 border border-sun-200"
+                      : "bg-brand-50 text-brand-700";
+        return `<span class="${bgClass} px-3 py-1 rounded-full text-sm">${escHtml(skill)}${isValidated ? " ✓" : ""}</span>`;
+      }).join("");
+    }
+
+    // Experience, Education, Projects - properly rendered
+    if (parsed) {
+      document.getElementById("experience-section").innerHTML = renderExperience(parsed.experience);
+      document.getElementById("education-section").innerHTML = renderEducation(parsed.education);
+      document.getElementById("projects-section").innerHTML = renderProjects(parsed.projects);
+    }
+  } catch (err) {
+    console.error("Failed to load portfolio data:", err);
+  }
+}
+
+loadPortfolioData();
+</script>
+{% endblock %}

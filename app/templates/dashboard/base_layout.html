@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block page_title %}TalentForge{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/icon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#F0FBF4',100:'#DFF3E6',200:'#BEE7CC',300:'#8FD3A9',400:'#5AB87F',
+               500:'#379E63',600:'#2A8452',700:'#236B44',800:'#1C5236',900:'#123420' },
+      sky:   { 50:'#EEF3FF',100:'#DCE7FF',200:'#B7CCFF',300:'#8CADFF',400:'#5C88FA',
+               500:'#3C68E8',600:'#2C4FCB',700:'#2540A0',800:'#1D3380',900:'#16265E' },
+      sun:   { 50:'#FFFBEA',100:'#FFF3C4',200:'#FCE588',300:'#FADB5F',400:'#F7C948',
+               500:'#F0B429',600:'#DE911D',700:'#CB6E17',800:'#B44D12',900:'#8D2B0B' },
+      ink: '#12211B',
+      offwhite: '#FAF9F5'
+    } } } }
+  </script>
+  <style>
+    .nav { display: flex; align-items: center; padding: .5rem .75rem; border-radius: .5rem; font-size: .875rem; color: #236B44; }
+    .nav:hover { background: #F0FBF4; }
+  </style>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body class="bg-offwhite text-ink min-h-screen">
+
+  <div class="flex min-h-screen relative overflow-x-hidden">
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-ink/40 backdrop-blur-xs z-30 lg:hidden transition-opacity"></div>
+
+    <!-- Sidebar (Desktop static / Mobile off-canvas drawer) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 lg:static lg:z-auto w-64 shrink-0 bg-white border-r border-brand-100 min-h-screen flex flex-col px-4 py-6 transition-all duration-300 ease-in-out overflow-y-auto shadow-2xl lg:shadow-none">
+      <div class="px-2 mb-8 flex items-center justify-between">
+        <a href="/" aria-label="TalentForge home"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-10 w-auto object-contain" /></a>
+        <button id="sidebar-close" type="button" aria-label="Close sidebar" title="Close sidebar" class="p-1.5 rounded-lg text-brand-400 hover:text-ink hover:bg-brand-50 transition flex items-center justify-center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      {% block sidebar_nav %}
+      {% endblock %}
+
+      <div class="mt-auto pt-6 border-t border-brand-100 flex items-center justify-between">
+        <a id="sidebar-profile-link" href="#" class="flex items-center gap-2 hover:opacity-80 transition cursor-pointer">
+          <div id="avatar-initial" class="h-8 w-8 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold">S</div>
+          <div>
+            <p id="user-name" class="text-sm font-medium leading-tight truncate max-w-[110px]">&mdash;</p>
+            <p id="role-text" class="text-xs text-brand-400 leading-tight"></p>
+          </div>
+        </a>
+        <button id="logout" class="text-xs text-brand-500 hover:text-ink">Log out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0 flex flex-col w-full">
+      <div class="flex items-center px-4 sm:px-8 py-3.5 border-b border-brand-100 bg-white sticky top-0 z-20">
+        <button id="sidebar-toggle" type="button" aria-label="Open sidebar" title="Open sidebar" class="hidden p-2 -ml-1 rounded-xl text-brand-700 hover:text-ink hover:bg-brand-50 transition flex items-center justify-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </button>
+
+        <div class="ml-auto flex items-center gap-3 sm:gap-4">
+          <button id="notification-button" type="button" aria-label="Show recent activity" aria-controls="activity-dialog" aria-expanded="false" class="relative text-brand-500 hover:text-ink p-1.5 rounded-lg hover:bg-brand-50 transition">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span id="notification-dot" class="hidden absolute top-1 right-1 h-2 w-2 rounded-full bg-sun-500"></span>
+          </button>
+          <a id="profile-link" href="/profile" aria-label="Open your profile" title="Profile" class="h-8 w-8 rounded-full bg-ink text-white flex items-center justify-center text-xs font-semibold hover:ring-2 hover:ring-brand-300">S</a>
+        </div>
+      </div>
+
+      <div id="activity-dialog" role="dialog" aria-modal="true" aria-labelledby="activity-dialog-title" class="hidden fixed inset-0 z-30">
+        <button id="activity-backdrop" type="button" aria-label="Close recent activity" class="absolute inset-0 bg-ink/25"></button>
+        <section class="relative ml-auto mr-4 sm:mr-8 mt-14 w-[min(24rem,calc(100vw-2rem))] bg-white border border-brand-100 rounded-2xl shadow-xl overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-brand-100">
+            <h2 id="activity-dialog-title" class="font-semibold text-ink">Last 10 notifications</h2>
+            <button id="activity-close" type="button" aria-label="Close recent activity" class="text-brand-500 hover:text-ink text-xl leading-none">&times;</button>
+          </div>
+          <div id="activity-dialog-content" class="p-5 max-h-[min(28rem,70vh)] overflow-y-auto">
+            <p class="text-sm text-brand-600">Loading activity...</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {% block content %}
+        {% endblock %}
+      </div>
+    </main>
+
+  <!-- Floating AI Chatbot -->
+  <button id="chat-launcher" type="button" aria-label="Open TalentForge AI chat" title="Ask TalentForge AI" class="fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-ink text-white shadow-lg hover:bg-brand-900 transition flex items-center justify-center text-xl">&#129302;</button>
+  <div id="chat-dialog" class="hidden fixed bottom-24 right-6 z-20 w-[min(24rem,calc(100vw-3rem))] bg-white border border-brand-100 rounded-xl shadow-xl overflow-hidden" role="dialog" aria-label="TalentForge AI chat">
+    <div class="flex items-center justify-between px-5 py-4 bg-ink text-white">
+      <h2 class="font-semibold">Ask TalentForge AI</h2>
+      <button id="chat-close" type="button" aria-label="Close chat" class="text-xl leading-none">&times;</button>
+    </div>
+    <div id="chat-messages" class="p-4 max-h-64 overflow-y-auto space-y-3"></div>
+    <div class="flex items-center gap-2 p-4 border-t border-brand-100">
+      <input id="chat-input" type="text" placeholder="Ask about roles, skills, or career advice…" class="flex-1 text-sm border border-brand-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      <button id="chat-send" type="button" aria-label="Send message" class="bg-ink text-white h-9 w-9 rounded-lg flex items-center justify-center hover:bg-brand-900 transition">&rarr;</button>
+    </div>
+  </div>
+
+  <script>
+    // Authentication check and user info
+    const accessToken = localStorage.getItem("access_token");
+    const role = localStorage.getItem("role");
+    const userId = localStorage.getItem("user_id");
+
+    if (!accessToken || !role) {
+      window.location.href = "/login";
+    }
+
+    // Fetch and display user info
+    async function loadUserInfo() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          headers: { "Authorization": `Bearer ${accessToken}` },
+        });
+        const user = await res.json();
+        document.getElementById("user-name").textContent = user.name;
+        document.getElementById("avatar-initial").textContent = user.name[0].toUpperCase();
+        const topAvatar = document.getElementById("avatar-initial-top");
+        if (topAvatar) topAvatar.textContent = user.name[0].toUpperCase();
+        const profileLink = document.getElementById("profile-link");
+        if (role === "student") {
+          profileLink.href = "/dashboard/student/portfolio";
+          document.getElementById("sidebar-profile-link").href = "/dashboard/student/portfolio";
+        } else {
+          profileLink.href = "/profile";
+          document.getElementById("sidebar-profile-link").href = "/profile";
+        }
+        const profileInitial = profileLink.querySelector("span") || profileLink;
+        if (profileInitial.textContent) profileInitial.textContent = user.name[0].toUpperCase();
+        document.getElementById("role-text").textContent = role === "industry" ? "Company" : "Student";
+      } catch (err) {
+        console.error("Failed to load user info:", err);
+      }
+    }
+
+    // Sidebar Toggle & Close Handlers
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    const sidebarClose = document.getElementById("sidebar-close");
+    const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+
+    function setSidebarState(collapsed) {
+      if (!sidebar) return;
+      if (collapsed) {
+        sidebar.classList.add("-translate-x-full", "lg:-ml-64", "opacity-0", "pointer-events-none");
+        sidebar.classList.remove("translate-x-0", "lg:w-64");
+        if (sidebarToggle) sidebarToggle.classList.remove("hidden");
+        if (sidebarBackdrop) sidebarBackdrop.classList.add("hidden");
+        localStorage.setItem("sidebar_collapsed", "true");
+      } else {
+        sidebar.classList.remove("-translate-x-full", "lg:-ml-64", "opacity-0", "pointer-events-none");
+        sidebar.classList.add("translate-x-0", "lg:w-64");
+        if (sidebarToggle) sidebarToggle.classList.add("hidden");
+        if (sidebarBackdrop && window.innerWidth < 1024) sidebarBackdrop.classList.remove("hidden");
+        localStorage.setItem("sidebar_collapsed", "false");
+      }
+    }
+
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener("click", () => {
+        setSidebarState(false);
+      });
+    }
+
+    if (sidebarClose && sidebar) {
+      sidebarClose.addEventListener("click", () => {
+        setSidebarState(true);
+      });
+    }
+
+    if (sidebarBackdrop) {
+      sidebarBackdrop.addEventListener("click", () => {
+        setSidebarState(true);
+      });
+    }
+
+    if (window.innerWidth < 1024) {
+      setSidebarState(true);
+    } else if (localStorage.getItem("sidebar_collapsed") === "true") {
+      setSidebarState(true);
+    } else {
+      setSidebarState(false);
+    }
+
+    // Logout handler
+    document.getElementById("logout").addEventListener("click", () => {
+      localStorage.clear();
+      window.location.href = "/";
+    });
+
+    const notificationButton = document.getElementById("notification-button");
+    const activityDialog = document.getElementById("activity-dialog");
+    const activityContent = document.getElementById("activity-dialog-content");
+
+    function escapeActivityText(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#039;"}[char]));
+    }
+
+    function renderActivity(items) {
+      if (!items.length) {
+        activityContent.innerHTML = '<p class="text-sm text-brand-600">No notifications yet.</p>';
+        return;
+      }
+      activityContent.innerHTML = items.map(item => {
+        const date = item.created_at ? new Date(item.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+        return `<article class="border-b border-brand-100 last:border-0 pb-4 mb-4 last:pb-0 last:mb-0"><p class="text-sm font-medium text-ink">${escapeActivityText(item.title)}</p><p class="text-xs text-brand-600 mt-1">${escapeActivityText(item.subtitle)}</p><time class="block text-[11px] text-brand-400 mt-2">${escapeActivityText(date)}</time></article>`;
+      }).join("");
+    }
+
+    async function loadActivity() {
+      try {
+        const response = await fetch("/api/auth/activity", { headers: { "Authorization": `Bearer ${accessToken}` } });
+        if (!response.ok) throw new Error("Could not load activity");
+        const items = await response.json();
+        renderActivity(items);
+        document.getElementById("notification-dot").classList.toggle("hidden", items.length === 0);
+      } catch (error) {
+        activityContent.innerHTML = '<p class="text-sm text-red-600">Notifications are unavailable right now.</p>';
+      }
+    }
+
+    function closeActivity() {
+      activityDialog.classList.add("hidden");
+      notificationButton.setAttribute("aria-expanded", "false");
+    }
+
+    notificationButton.addEventListener("click", () => {
+      const isHidden = activityDialog.classList.contains("hidden");
+      activityDialog.classList.toggle("hidden", !isHidden);
+      notificationButton.setAttribute("aria-expanded", String(isHidden));
+      if (isHidden) loadActivity();
+    });
+    document.getElementById("activity-close").addEventListener("click", closeActivity);
+    document.getElementById("activity-backdrop").addEventListener("click", closeActivity);
+    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeActivity(); document.getElementById("chat-dialog").classList.add("hidden"); } });
+
+    // Floating AI Chatbot
+    const chatEndpoint = role === "student" ? "/api/students/ai/ask" : "/api/industry/ai/ask";
+
+    async function sendChatMessage() {
+      const input = document.getElementById("chat-input");
+      const messagesEl = document.getElementById("chat-messages");
+      const question = input.value.trim();
+      if (!question) return;
+
+      // Show user message
+      messagesEl.innerHTML += `<div class="text-sm text-right"><span class="inline-block bg-ink text-white px-3 py-2 rounded-lg rounded-br-sm max-w-[85%]">${escapeActivityText(question)}</span></div>`;
+      input.value = "";
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // Show thinking indicator
+      const thinkingId = "thinking-" + Date.now();
+      messagesEl.innerHTML += `<div id="${thinkingId}" class="text-sm"><span class="inline-block bg-brand-50 text-brand-700 px-3 py-2 rounded-lg rounded-bl-sm">Thinking…</span></div>`;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      try {
+        const res = await fetch(chatEndpoint, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        const data = await res.json();
+        const thinkingEl = document.getElementById(thinkingId);
+        if (thinkingEl) {
+          thinkingEl.innerHTML = `<span class="inline-block bg-brand-50 text-brand-800 px-3 py-2 rounded-lg rounded-bl-sm max-w-[85%]">${escapeActivityText(res.ok ? data.answer : (data.error || "Something went wrong."))}</span>`;
+        }
+      } catch (err) {
+        const thinkingEl = document.getElementById(thinkingId);
+        if (thinkingEl) thinkingEl.innerHTML = `<span class="inline-block bg-red-50 text-red-700 px-3 py-2 rounded-lg rounded-bl-sm">Network error. Please try again.</span>`;
+      }
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    document.getElementById("chat-launcher").addEventListener("click", () => document.getElementById("chat-dialog").classList.toggle("hidden"));
+    document.getElementById("chat-close").addEventListener("click", () => document.getElementById("chat-dialog").classList.add("hidden"));
+    document.getElementById("chat-send").addEventListener("click", sendChatMessage);
+    document.getElementById("chat-input").addEventListener("keydown", event => { if (event.key === "Enter") sendChatMessage(); });
+
+    // Initialize Socket.IO
+    try {
+      const socket = io({ auth: { token: accessToken } });
+      socket.on("connect", () => console.log("Socket connected"));
+      socket.on("disconnect", () => console.log("Socket disconnected"));
+      window.socket = socket;
+    } catch (err) {
+      console.warn("Socket.IO connection failed:", err);
+    }
+
+    loadUserInfo();
+  </script>
+
+  {% block scripts %}
+  {% endblock %}
+</body>
+</html>
+

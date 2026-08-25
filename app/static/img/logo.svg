@@ -1,0 +1,34 @@
+<svg viewBox="0 0 260 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#126840"/>
+      <stop offset="100%" stop-color="#0A4628"/>
+    </linearGradient>
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Logo Icon Mark -->
+  <g transform="translate(3, 4)">
+    <rect width="48" height="48" rx="12" fill="url(#brandLogoGrad)"/>
+    <!-- Left Facet (Sage) -->
+    <path d="M25.8 10L18.6 20.1H23.9L25.8 10Z" fill="#8EB7A1"/>
+    <!-- Main Lightning Flash (Crisp White) -->
+    <path d="M25.8 10L31.9 23.5H27L30.8 33.6L23.9 20.1H24L25.8 10Z" fill="#FFFFFF" filter="url(#logoShadow)"/>
+    <!-- Bottom Underline Capsule -->
+    <rect x="14.4" y="37.6" width="19.3" height="2.2" rx="1.1" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Wordmark: TalentForge -->
+  <text x="62" y="31" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" font-weight="900" font-size="23" letter-spacing="-0.6" fill="#11231B">
+    Talent<tspan fill="#167347">Forge</tspan>
+  </text>
+  <!-- Spark Symbol -->
+  <text x="198" y="26" font-family="sans-serif" font-weight="900" font-size="14" fill="#E5A81E">&#10022;</text>
+  
+  <!-- Modern Subtitle -->
+  <text x="63" y="45" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="8.5" letter-spacing="2" fill="#5F766C">
+    CAREER &amp; SKILLS PLATFORM
+  </text>
+</svg>

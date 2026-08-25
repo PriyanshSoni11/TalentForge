@@ -1,0 +1,167 @@
+{% extends "dashboard/base_layout.html" %}
+
+{% block page_title %}Your Profile · TalentForge{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Account</p>
+<nav class="space-y-1">
+  <a href="javascript:history.back()" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Back to dashboard</a>
+  <a href="/profile" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Profile</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl space-y-6">
+  <div>
+    <p class="text-sm font-semibold text-brand-600 mb-2">Account details</p>
+    <h1 class="text-3xl font-bold mb-2">Your profile</h1>
+    <p class="text-brand-600">Keep the information people use to understand your goals and experience up to date.</p>
+  </div>
+
+  <form id="profile-form" class="bg-white border border-brand-100 rounded-xl p-6 space-y-5">
+    <div class="grid md:grid-cols-2 gap-5">
+      <label class="block text-sm text-brand-800">Full name
+        <input id="name" required maxlength="120" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      </label>
+      <label class="block text-sm text-brand-800">Email
+        <input id="email" readonly class="w-full mt-1 px-3 py-2 border border-brand-100 bg-brand-50 text-brand-500 rounded-lg" />
+      </label>
+    </div>
+
+    <div id="student-fields" class="hidden">
+      <label class="block text-sm text-brand-800">College or university
+        <input id="college-name" maxlength="160" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      </label>
+    </div>
+
+    <div id="mentor-fields" class="hidden space-y-5 border-t border-brand-100 pt-5">
+      <div>
+        <h2 class="font-semibold text-ink">Mentor profile</h2>
+        <p class="text-sm text-brand-600 mt-1">These details are shown to students when you accept mentorship requests.</p>
+      </div>
+      <label class="block text-sm text-brand-800">Professional headline
+        <input id="headline" maxlength="120" placeholder="e.g. Product designer at Northstar" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      </label>
+      <label class="block text-sm text-brand-800">Short bio
+        <textarea id="bio" rows="4" maxlength="1000" placeholder="What can you help students learn?" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300"></textarea>
+      </label>
+      <div class="grid md:grid-cols-2 gap-5">
+        <label class="block text-sm text-brand-800">Expertise
+          <input id="expertise" placeholder="Python, Design, Leadership" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+          <span class="text-xs text-brand-500">Separate skills with commas.</span>
+        </label>
+        <label class="block text-sm text-brand-800">Availability
+          <input id="availability" maxlength="80" placeholder="Open to requests" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+        </label>
+      </div>
+      <div class="flex items-center justify-between mt-4">
+        <label class="flex items-center gap-2 text-sm text-brand-800">
+          <input id="accepting-requests" type="checkbox" class="h-4 w-4 accent-brand-700" />
+          Accept new mentorship requests
+        </label>
+        <button id="delete-mentor-profile" type="button" class="text-sm text-red-600 hover:text-red-800 font-medium hidden">Delete mentor profile</button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-4 border-t border-brand-100 pt-5">
+      <p id="profile-status" class="text-sm" aria-live="polite"></p>
+      <button id="save-profile" type="submit" class="bg-brand-700 text-white px-5 py-2 rounded-lg hover:bg-brand-800 font-medium">Save profile</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const profileToken = localStorage.getItem("access_token");
+const profileRole = localStorage.getItem("role");
+const profileStatus = document.getElementById("profile-status");
+
+function showProfileStatus(message, error = false) {
+  profileStatus.textContent = message;
+  profileStatus.className = `text-sm ${error ? "text-red-600" : "text-brand-600"}`;
+}
+
+async function loadProfile() {
+  try {
+    const response = await fetch("/api/auth/profile", { headers: { "Authorization": `Bearer ${profileToken}` } });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load profile");
+    document.getElementById("name").value = data.user.name || "";
+    document.getElementById("email").value = data.user.email || "";
+    if (profileRole === "student") {
+      document.getElementById("student-fields").classList.remove("hidden");
+      document.getElementById("college-name").value = data.profile.college_name || "";
+    } else {
+      document.getElementById("mentor-fields").classList.remove("hidden");
+      document.getElementById("headline").value = data.profile.headline || "";
+      document.getElementById("bio").value = data.profile.bio || "";
+      document.getElementById("expertise").value = (data.profile.expertise || []).join(", ");
+      document.getElementById("availability").value = data.profile.availability || "Open to requests";
+      document.getElementById("accepting-requests").checked = data.profile.accepting_requests !== false;
+      if (Object.keys(data.profile).length > 0) {
+        document.getElementById("delete-mentor-profile").classList.remove("hidden");
+      }
+    }
+  } catch (error) { showProfileStatus(error.message, true); }
+}
+
+document.getElementById("profile-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = document.getElementById("save-profile");
+  button.disabled = true;
+  showProfileStatus("Saving...");
+  const payload = { name: document.getElementById("name").value };
+  if (profileRole === "student") {
+    payload.college_name = document.getElementById("college-name").value;
+  } else {
+    payload.headline = document.getElementById("headline").value;
+    payload.bio = document.getElementById("bio").value;
+    payload.expertise = document.getElementById("expertise").value.split(",").map(skill => skill.trim()).filter(Boolean);
+    payload.availability = document.getElementById("availability").value;
+    payload.accepting_requests = document.getElementById("accepting-requests").checked;
+  }
+  try {
+    const response = await fetch("/api/auth/profile", { method: "PUT", headers: { "Authorization": `Bearer ${profileToken}`, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not save profile");
+    showProfileStatus("Profile saved.");
+    if (profileRole !== "student") {
+      document.getElementById("delete-mentor-profile").classList.remove("hidden");
+    }
+  } catch (error) { showProfileStatus(error.message, true); }
+  button.disabled = false;
+});
+
+document.getElementById("delete-mentor-profile").addEventListener("click", async () => {
+  if (!confirm("Are you sure you want to delete your mentor profile? You will no longer receive mentorship requests from students.")) return;
+  
+  const button = document.getElementById("delete-mentor-profile");
+  button.disabled = true;
+  showProfileStatus("Deleting mentor profile...");
+  
+  try {
+    const response = await fetch("/api/auth/profile/mentor", {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${profileToken}` }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not delete mentor profile");
+    
+    document.getElementById("headline").value = "";
+    document.getElementById("bio").value = "";
+    document.getElementById("expertise").value = "";
+    document.getElementById("availability").value = "Open to requests";
+    document.getElementById("accepting-requests").checked = true;
+    button.classList.add("hidden");
+    
+    showProfileStatus("Mentor profile deleted successfully.");
+  } catch (error) {
+    showProfileStatus(error.message, true);
+  }
+  button.disabled = false;
+});
+
+loadProfile();
+</script>
+{% endblock %}

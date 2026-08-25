@@ -1,0 +1,127 @@
+{% extends "dashboard/base_layout.html" %}
+{% block page_title %}Campus Events · TalentForge{% endblock %}
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/industry" class="nav flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
+  <a href="/dashboard/industry/candidates" class="nav flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Candidates</a>
+  <a href="/dashboard/industry/postings" class="nav flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Postings</a>
+  <a href="/dashboard/industry/courses" class="nav flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Courses</a>
+</nav>
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/industry/network" class="nav flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Talent network</a>
+  <a href="/dashboard/industry/events" class="nav flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Campus events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold text-brand-600 mb-2">Meet emerging talent</p>
+      <h1 class="text-3xl font-bold mb-2">Campus events</h1>
+      <p class="text-brand-600">Host recruitment fairs and workshops for students.</p>
+    </div>
+    <button id="host-event-btn" class="bg-ink text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-900 transition">Host an event</button>
+  </div>
+  <div id="events-grid" class="grid md:grid-cols-2 gap-5">
+    <p class="text-brand-600">Loading events...</p>
+  </div>
+</div>
+
+<!-- Event Modal -->
+<div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-ink/30 backdrop-blur-sm" id="event-modal-backdrop"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+    <h2 class="text-xl font-bold mb-4">Host an Event</h2>
+    <div class="space-y-4">
+      <input id="event-title" placeholder="Event title" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      <textarea id="event-description" placeholder="Description" rows="3" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"></textarea>
+      <input id="event-location" placeholder="Location or meeting link" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      <input id="event-starts" type="datetime-local" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
+    </div>
+    <div class="mt-6 flex justify-end gap-3">
+      <button id="close-event-modal" class="px-4 py-2 text-sm font-medium text-brand-600 hover:text-brand-800 transition">Cancel</button>
+      <button id="submit-event" class="px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition">Create Event</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadEvents() { 
+  const response = await fetch("/api/industry/events", { headers: { "Authorization": `Bearer ${accessToken}` } }); 
+  const events = response.ok ? await response.json() : []; 
+  
+  document.getElementById("events-grid").innerHTML = events.length 
+    ? events.map(event => `
+      <article class="bg-white border border-brand-100 rounded-xl p-5 hover:shadow-md transition">
+        <div class="flex justify-between gap-3">
+          <h2 class="font-semibold text-ink">${event.title}</h2>
+          <span class="text-xs text-brand-500 whitespace-nowrap">${new Date(event.starts_at).toLocaleDateString()}</span>
+        </div>
+        <p class="text-sm text-brand-600 mt-1">${event.location}</p>
+        <p class="text-sm text-brand-700 mt-4">${event.description}</p>
+      </article>`).join("") 
+    : `<div class="md:col-span-2 bg-white border border-brand-100 rounded-xl p-8 text-center text-brand-600">No events hosted yet.</div>`; 
+}
+
+const modal = document.getElementById("event-modal");
+const btnHost = document.getElementById("host-event-btn");
+const btnClose = document.getElementById("close-event-modal");
+const backdrop = document.getElementById("event-modal-backdrop");
+const btnSubmit = document.getElementById("submit-event");
+
+function closeModal() {
+  modal.classList.add("hidden");
+  document.getElementById("event-title").value = "";
+  document.getElementById("event-description").value = "";
+  document.getElementById("event-location").value = "";
+  document.getElementById("event-starts").value = "";
+}
+
+btnHost.addEventListener("click", () => modal.classList.remove("hidden"));
+btnClose.addEventListener("click", closeModal);
+backdrop.addEventListener("click", closeModal);
+
+btnSubmit.addEventListener("click", async () => {
+  const title = document.getElementById("event-title").value.trim();
+  const description = document.getElementById("event-description").value.trim();
+  const location = document.getElementById("event-location").value.trim();
+  const starts = document.getElementById("event-starts").value;
+  
+  if (!title || !description || !location || !starts) {
+    alert("Please fill in all fields.");
+    return;
+  }
+  
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = "Creating...";
+  
+  const payload = {
+    title, description, location, 
+    starts_at: new Date(starts).toISOString()
+  };
+  
+  const response = await fetch("/api/industry/events", { 
+    method: "POST", 
+    headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" }, 
+    body: JSON.stringify(payload) 
+  }); 
+  
+  if (response.ok) {
+    loadEvents();
+    closeModal();
+  } else {
+    alert((await response.json()).error || "Could not create event");
+  }
+  
+  btnSubmit.disabled = false;
+  btnSubmit.textContent = "Create Event";
+});
+
+loadEvents();
+</script>
+{% endblock %}

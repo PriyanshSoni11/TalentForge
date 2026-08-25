@@ -1,0 +1,156 @@
+{% extends "dashboard/base_layout.html" %}
+
+{% block page_title %}Learning Paths · TalentForge{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/student" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
+  <a href="/dashboard/student/roles" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Explore roles</a>
+  <a href="/dashboard/student/courses" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Learning paths</a>
+  <a href="/dashboard/student/portfolio" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My portfolio</a>
+  <a href="/dashboard/student/applications" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Applications</a>
+</nav>
+
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/student/mentors" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Mentors</a>
+  <a href="/dashboard/student/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Company events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">Learning Paths</h1>
+      <p class="text-brand-600">Curated courses to strengthen your skills, close knowledge gaps, and advance your career.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2" id="courses-grid">
+    <div class="md:col-span-2 bg-white border border-brand-100 rounded-2xl p-6 flex items-center justify-center min-h-96">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-brand-50 mb-4 animate-pulse">
+          <svg class="h-6 w-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17s4.5 10.747 10 10.747c5.5 0 10-4.998 10-10.747C22 10.998 17.5 6.253 12 6.253z"></path>
+          </svg>
+        </div>
+        <p class="text-brand-700 font-medium">Loading courses...</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(str) {
+  return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+async function loadCourses() {
+  try {
+    const res = await fetch("/api/students/courses/recommended", {
+      headers: { "Authorization": `Bearer ${accessToken}` },
+    });
+    const courses = await res.json();
+    
+    const coursesGrid = document.getElementById("courses-grid");
+    coursesGrid.innerHTML = "";
+    
+    if (!courses || courses.length === 0) {
+      coursesGrid.innerHTML = `
+        <div class="md:col-span-2 bg-white border border-brand-100 rounded-2xl p-10 text-center">
+          <div class="h-12 w-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3 text-xl">&#128218;</div>
+          <h3 class="font-bold text-ink mb-1">No recommended courses yet</h3>
+          <p class="text-brand-600 text-sm">Complete your skill assessment and profile to receive personalized course recommendations.</p>
+        </div>
+      `;
+      return;
+    }
+
+    courses.forEach(course => {
+      const card = document.createElement("div");
+      card.className = "bg-white border border-brand-100 rounded-2xl p-6 hover:shadow-md transition flex flex-col justify-between";
+      const enrollment = course.enrollment;
+      const skills = course.skills_covered || [];
+      
+      let statusBadge = "";
+      if (enrollment) {
+        if (enrollment.status === "completed") {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Completed</span>`;
+        } else {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">Enrolled</span>`;
+        }
+      }
+
+      card.innerHTML = `
+        <div>
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div class="min-w-0">
+              <h3 class="text-lg font-bold text-ink truncate">${esc(course.title || "Untitled Course")}</h3>
+              <p class="text-xs text-brand-600 mt-0.5">${esc(course.provider || course.category || "Online Academy")}</p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${statusBadge}
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-100">
+                ${esc(course.level || "Beginner")}
+              </span>
+            </div>
+          </div>
+          <p class="text-brand-700 text-sm mb-4 line-clamp-3">${esc(course.description || "No description available.")}</p>
+          ${skills.length ? `
+            <div class="flex flex-wrap gap-1.5 mb-5">
+              ${skills.slice(0, 4).map(skill => `
+                <span class="text-xs bg-brand-50 text-brand-700 border border-brand-100 px-2 py-0.5 rounded-md">${esc(skill)}</span>
+              `).join("")}
+              ${skills.length > 4 ? `<span class="text-xs text-brand-400 self-center">+${skills.length - 4} more</span>` : ""}
+            </div>
+          ` : ""}
+        </div>
+        <div class="pt-4 border-t border-brand-50 flex items-center justify-between gap-3">
+          <span class="text-xs text-brand-500 flex items-center gap-1">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            ${esc(course.duration || "Self-paced")}
+          </span>
+          <button onclick="handleCourseAction('${course.id}', '${esc(course.content_url || '#')}')" class="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-xl transition text-sm font-medium shadow-sm flex items-center gap-1.5">
+            <span>${enrollment ? "Continue Learning" : "Start Course"}</span>
+            <span class="text-xs">&rarr;</span>
+          </button>
+        </div>
+      `;
+      coursesGrid.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Failed to load courses:", err);
+    document.getElementById("courses-grid").innerHTML = `
+      <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+        <p class="text-red-700 font-medium">Failed to load courses</p>
+        <button onclick="loadCourses()" class="mt-3 bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-800 transition">Try Again</button>
+      </div>
+    `;
+  }
+}
+
+async function handleCourseAction(courseId, contentUrl) {
+  try {
+    // Auto-enroll if not already enrolled
+    await fetch(`/api/students/courses/${courseId}/enroll`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${accessToken}` }
+    });
+  } catch (e) {
+    // Ignore enrollment errors and continue opening content
+  }
+
+  if (contentUrl && contentUrl !== "#") {
+    window.open(contentUrl, "_blank");
+  } else {
+    alert("Course material link will be available soon.");
+  }
+}
+
+loadCourses();
+</script>
+{% endblock %}

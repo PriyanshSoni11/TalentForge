@@ -1,0 +1,27 @@
+<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#12633E"/>
+      <stop offset="100%" stop-color="#0B482A"/>
+    </linearGradient>
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base Container -->
+  <rect width="512" height="512" rx="116" fill="url(#bgGrad)"/>
+
+  <!-- Angled Diagonal Shadow -->
+  <path d="M255 215L287 251L296 360L210 270L255 215Z" fill="#083B22" opacity="0.45"/>
+  <path d="M287 251L328 358L296 360L287 251Z" fill="#083B22" opacity="0.6"/>
+
+  <!-- Left Fold / Facet (Sage Green Accent) -->
+  <path d="M276 108L199 215H255L276 108Z" fill="#8EB7A1"/>
+
+  <!-- Main Crisp White Lightning Mark -->
+  <path d="M276 108L340 251H287L328 358L255 215H255.5L276 108Z" fill="#FFFFFF" filter="url(#subtleShadow)"/>
+
+  <!-- Bottom Capsule Bar -->
+  <rect x="153" y="401" width="206" height="12" rx="6" fill="#FFFFFF"/>
+</svg>

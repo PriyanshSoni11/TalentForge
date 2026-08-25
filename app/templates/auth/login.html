@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ role_label }} login &middot; TalentForge</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/icon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      brand: { 50:'#F3F8F4',100:'#E7F2EA',200:'#C9E4D1',300:'#A0CFAE',400:'#6FB086',
+               500:'#4E8B6C',600:'#3A7057',700:'#2F6B4F',800:'#234F3B',900:'#173428' },
+      offwhite: '#FAF9F5'
+    } } } }
+  </script>
+</head>
+<body class="bg-offwhite min-h-screen flex items-center justify-center p-4">
+  <form id="login-form" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-brand-100 w-full max-w-sm space-y-4">
+    <a href="/" class="block"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-9 w-auto mx-auto" /></a>
+    <h1 class="text-xl font-semibold text-brand-800 text-center">{{ role_label or "Student" }} login</h1>
+
+    <div>
+      <label class="text-sm text-brand-700">Email</label>
+      <input type="email" id="email" required
+        class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" />
+    </div>
+
+    <div>
+      <label class="text-sm text-brand-700">Password</label>
+      <input type="password" id="password" required
+        class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" />
+    </div>
+
+    <p id="error" class="text-sm text-red-600 hidden"></p>
+
+    <button type="submit"
+      class="w-full bg-brand-700 text-white py-2 rounded-lg hover:bg-brand-800 transition font-medium">
+      Log in
+    </button>
+
+    <p class="text-xs text-center text-brand-600">No account? <a href="{{ register_url or '/register' }}" class="font-semibold text-brand-700 hover:text-brand-800">Register as {{ role_label|lower }}</a></p>
+  </form>
+
+  <script>
+    const form = document.getElementById("login-form");
+    const errorEl = document.getElementById("error");
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.classList.remove("hidden");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.classList.add("hidden");
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role: "{{ role or 'student' }}" }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "Login failed");
+          return;
+        }
+
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        localStorage.setItem("role", data.user.role);
+        localStorage.setItem("user_id", data.user.id);
+
+        window.location.href = data.user.role === "student" ? "/assessment" : "/dashboard/industry";
+      } catch (err) {
+        console.error("Login error:", err);
+        showError("Network error, please try again.");
+      }
+    });
+
+  </script>
+</body>
+</html>

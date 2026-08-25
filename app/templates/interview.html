@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Interview Practice · TalentForge</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/icon.svg') }}" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#F0FBF4',100:'#DFF3E6',200:'#BEE7CC',300:'#8FD3A9',400:'#5AB87F',500:'#379E63',600:'#2A8452',700:'#236B44',800:'#1C5236',900:'#123420' },
+            sky: { 50:'#EEF3FF',100:'#DCE7FF',200:'#B7CCFF',300:'#8CADFF',400:'#5C88FA',500:'#3C68E8',600:'#2C4FCB',700:'#2540A0',800:'#1D3380',900:'#16265E' },
+            sun: { 50:'#FFFBEA',100:'#FFF3C4',200:'#FCE588',300:'#FADB5F',400:'#F7C948',500:'#F0B429',600:'#DE911D',700:'#CB6E17',800:'#B44D12',900:'#8D2B0B' },
+            ink: '#12211B',
+            offwhite: '#FAF9F5'
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-offwhite text-ink min-h-screen flex flex-col">
+
+  <!-- Navigation Header -->
+  <header class="bg-white border-b border-brand-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+    <a href="/dashboard/student" class="flex items-center gap-3">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-8 w-auto" />
+      <span class="text-xs uppercase tracking-wider font-bold bg-brand-50 text-brand-700 px-2.5 py-0.5 rounded-full border border-brand-100">AI Interview</span>
+    </a>
+    <div class="flex items-center gap-4">
+      <div id="media-indicator" class="flex items-center gap-2 text-xs font-medium text-brand-700 bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">
+        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Camera & Mic Active</span>
+      </div>
+      <a href="/dashboard/student/applications" class="text-sm font-medium text-brand-600 hover:text-ink transition">Exit</a>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 md:px-6 py-8">
+    
+    <!-- Loading State -->
+    <div id="loading" class="bg-white border border-brand-100 rounded-2xl p-12 text-center shadow-sm">
+      <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-brand-50 mb-4 animate-spin text-brand-600">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <p class="text-brand-800 font-semibold text-lg">Initializing your AI interview session...</p>
+      <p class="text-brand-500 text-sm mt-1">Connecting to camera, microphone, and questions.</p>
+    </div>
+
+    <!-- Workspace State -->
+    <div id="workspace" class="hidden space-y-6">
+      
+      <!-- Top Title Bar -->
+      <div class="bg-white border border-brand-100 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <span class="text-xs uppercase font-bold tracking-wider text-brand-500">Target Role</span>
+          <h1 id="job-title" class="text-2xl md:text-3xl font-bold text-ink mt-0.5">Interview Session</h1>
+          <p id="job-subtitle" class="text-sm text-brand-600 mt-1">Answer each question by recording your response using your camera and microphone.</p>
+        </div>
+        <div class="flex items-center gap-3 self-start md:self-auto bg-brand-50 border border-brand-100 px-4 py-2.5 rounded-xl">
+          <div class="text-right">
+            <p class="text-xs text-brand-500 font-medium">Progress</p>
+            <p id="progress-text" class="text-sm font-bold text-brand-800">0 of 10 Answered</p>
+          </div>
+          <div class="h-8 w-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold" id="progress-circle">0%</div>
+        </div>
+      </div>
+
+      <!-- Main Two-Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+
+        <!-- Left: Live Video & Question Panel -->
+        <section class="space-y-5">
+          
+          <!-- Live Camera Video Container (Always ON) -->
+          <div class="relative bg-ink rounded-2xl overflow-hidden aspect-video shadow-lg border border-brand-200">
+            <video id="preview" autoplay muted playsinline class="w-full h-full object-cover"></video>
+            
+            <!-- Live Overlay Badges -->
+            <div class="absolute top-4 left-4 flex items-center gap-2">
+              <span id="live-badge" class="bg-black/60 backdrop-blur text-white text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/10">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                <span>Live Camera</span>
+              </span>
+              <span id="recording-badge" class="hidden bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow animate-pulse">
+                <span class="h-2 w-2 rounded-full bg-white"></span>
+                <span>REC <span id="record-timer">00:00</span></span>
+              </span>
+            </div>
+
+            <div class="absolute bottom-4 left-4 right-4 bg-ink/75 backdrop-blur border border-white/10 text-white px-4 py-2.5 rounded-xl text-xs flex items-center justify-between">
+              <span id="camera-status-text">Camera & microphone are live and streaming</span>
+              <span class="text-brand-300 font-medium">Easy Difficulty · 10 Questions</span>
+            </div>
+          </div>
+
+          <!-- Current Question Card -->
+          <div class="bg-white border border-brand-100 rounded-2xl p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-brand-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-500" id="question-index-label">Question 1 of 10</span>
+                <span id="question-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200">Unanswered</span>
+              </div>
+              <span class="text-xs text-brand-400">Speak clearly with concrete examples</span>
+            </div>
+
+            <h2 id="current-question-text" class="text-lg md:text-xl font-bold text-ink leading-relaxed">
+              Loading question...
+            </h2>
+
+            <!-- Feedback from previous answer if answered -->
+            <div id="question-feedback-box" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-900">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-bold text-xs uppercase tracking-wider text-emerald-700">Answer Evaluated by Gemini</span>
+                <span id="feedback-score" class="font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">Score: 85%</span>
+              </div>
+              <p id="feedback-text" class="text-xs leading-relaxed text-emerald-800"></p>
+            </div>
+
+            <!-- Controls -->
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <button id="btn-start-record" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm flex items-center gap-2 shadow-sm">
+                <span class="h-2.5 w-2.5 rounded-full bg-red-400"></span>
+                <span>Start Recording Answer</span>
+              </button>
+
+              <button id="btn-stop-record" disabled class="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition text-sm flex items-center gap-2 shadow-sm">
+                <span class="h-2.5 w-2.5 rounded-sm bg-white"></span>
+                <span>Stop & Submit Answer</span>
+              </button>
+
+              <span id="recording-status-msg" class="text-xs text-brand-600 font-medium"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Questions Sidebar -->
+        <aside class="space-y-4">
+          <div class="bg-white border border-brand-100 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-ink mb-3 text-base">Questions List (10)</h3>
+            <div id="question-list" class="space-y-2">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <div class="pt-5 border-t border-brand-100 mt-5 space-y-3">
+              <button id="btn-complete-interview" disabled class="w-full bg-ink hover:bg-brand-900 disabled:opacity-40 disabled:hover:bg-ink text-white font-medium py-3 rounded-xl transition text-sm shadow-sm flex items-center justify-center gap-2">
+                <span>Complete Interview</span>
+                <span class="text-xs">&rarr;</span>
+              </button>
+              <p id="complete-guidance" class="text-xs text-brand-500 text-center">Record answers to all 10 questions to submit.</p>
+            </div>
+          </div>
+
+          <div class="bg-brand-50 border border-brand-100 rounded-2xl p-4 text-xs text-brand-700 space-y-2">
+            <p class="font-bold text-brand-900 flex items-center gap-1.5">
+              <span>&#128161;</span> Tips for best scoring:
+            </p>
+            <ul class="list-disc pl-4 space-y-1 text-brand-600">
+              <li>Keep video & audio streaming clearly.</li>
+              <li>Structure answers with situation, action, and results.</li>
+              <li>Mention tools, technical choices, and lessons learned.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Final Result State -->
+    <div id="result" class="hidden bg-white border border-brand-100 rounded-2xl p-8 md:p-12 shadow-sm text-center max-w-2xl mx-auto space-y-6">
+      <!-- Injected dynamically on completion -->
+    </div>
+  </main>
+
+<script>
+const token = localStorage.getItem("access_token");
+const interviewId = "{{ interview_id }}";
+
+let interview = null;
+let questions = [];
+let responsesMap = {}; // question_id -> response object
+let currentIndex = 0;
+
+let mediaStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let timerInterval = null;
+let recordingSeconds = 0;
+
+const $ = id => document.getElementById(id);
+
+function authHeaders() {
+  return { "Authorization": `Bearer ${token}` };
+}
+
+// 1. Initialize camera & audio on load (Always ON)
+async function initMedia() {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+      audio: true
+    });
+    const previewEl = $("preview");
+    previewEl.srcObject = mediaStream;
+    $("media-indicator").innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Camera & Mic Live</span>`;
+  } catch (err) {
+    console.error("Camera/Mic access error:", err);
+    $("media-indicator").innerHTML = `<span class="h-2 w-2 rounded-full bg-red-500"></span><span class="text-red-700">Camera/Mic Permission Required</span>`;
+    $("camera-status-text").textContent = "Camera or microphone permission is blocked. Please allow access in browser settings.";
+  }
+}
+
+// 2. Load Interview Session & Questions
+async function loadInterview() {
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  // Start live camera right away
+  await initMedia();
+
+  try {
+    const res = await fetch(`/api/students/interviews/${interviewId}`, { headers: authHeaders() });
+    const data = await res.json();
+
+    if (!res.ok) {
+      $("loading").innerHTML = `
+        <div class="text-center py-6">
+          <p class="text-red-700 font-bold text-lg">Interview Unavailable</p>
+          <p class="text-brand-600 text-sm mt-1">${data.error || "Could not load interview session."}</p>
+          <a href="/dashboard/student/roles" class="inline-block mt-4 bg-brand-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-800 transition">Back to Roles</a>
+        </div>
+      `;
+      return;
+    }
+
+    interview = data.interview;
+    questions = data.questions || [];
+    
+    // Store existing responses
+    (data.responses || []).forEach(r => {
+      responsesMap[r.question_id] = r;
+    });
+
+    $("job-title").textContent = (interview.job_postings?.title || "Role") + " · Practice Session";
+    
+    // Find first unanswered question
+    const firstUnanswered = questions.findIndex(q => !responsesMap[q.id]);
+    currentIndex = firstUnanswered !== -1 ? firstUnanswered : 0;
+
+    $("loading").classList.add("hidden");
+    $("workspace").classList.remove("hidden");
+
+    renderQuestion();
+    renderSidebarList();
+    updateProgress();
+  } catch (err) {
+    console.error("Error loading interview:", err);
+    $("loading").innerHTML = `<p class="text-red-700 font-bold">Network error loading interview session.</p>`;
+  }
+}
+
+// 3. Render Current Question
+function renderQuestion() {
+  if (!questions.length) return;
+  const item = questions[currentIndex];
+  const response = responsesMap[item.id];
+
+  $("question-index-label").textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+  $("current-question-text").textContent = item.question_text;
+
+  const statusPill = $("question-status-pill");
+  const feedbackBox = $("question-feedback-box");
+
+  if (response) {
+    statusPill.textContent = "Answered ✓";
+    statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200";
+    
+    feedbackBox.classList.remove("hidden");
+    $("feedback-score").textContent = `Score: ${response.score_pct || 80}%`;
+    $("feedback-text").textContent = response.feedback || "Good response addressing key aspects of the question.";
+    
+    $("btn-start-record").innerHTML = `<span class="h-2.5 w-2.5 rounded-full bg-red-400"></span><span>Re-record Answer</span>`;
+  } else {
+    statusPill.textContent = "Unanswered";
+    statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200";
+    
+    feedbackBox.classList.add("hidden");
+    $("btn-start-record").innerHTML = `<span class="h-2.5 w-2.5 rounded-full bg-red-400"></span><span>Start Recording Answer</span>`;
+  }
+
+  $("btn-start-record").disabled = false;
+  $("btn-stop-record").disabled = true;
+  $("recording-status-msg").textContent = "";
+}
+
+// 4. Render Sidebar Questions
+function renderSidebarList() {
+  $("question-list").innerHTML = questions.map((item, idx) => {
+    const isAnswered = Boolean(responsesMap[item.id]);
+    const isCurrent = idx === currentIndex;
+
+    let bgClass = "bg-brand-50/60 border-brand-100 text-brand-700 hover:bg-brand-100/70";
+    if (isCurrent) {
+      bgClass = "bg-brand-100 border-brand-300 text-ink font-semibold ring-2 ring-brand-300";
+    }
+
+    return `
+      <button data-index="${idx}" class="q-nav-btn w-full text-left p-3 rounded-xl border text-xs transition flex items-start gap-2.5 ${bgClass}">
+        <span class="h-5 w-5 rounded-full shrink-0 flex items-center justify-center font-bold text-[11px] ${isAnswered ? 'bg-emerald-600 text-white' : 'bg-brand-200 text-brand-800'}">
+          ${isAnswered ? '✓' : (idx + 1)}
+        </span>
+        <span class="truncate flex-1 leading-snug">${item.question_text}</span>
+      </button>
+    `;
+  }).join("");
+
+  document.querySelectorAll(".q-nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        alert("Please finish or stop your current recording before switching questions.");
+        return;
+      }
+      currentIndex = Number(btn.dataset.index);
+      renderQuestion();
+      renderSidebarList();
+    });
+  });
+}
+
+// 5. Update Progress Counts
+function updateProgress() {
+  const answeredCount = Object.keys(responsesMap).length;
+  const total = questions.length || 1;
+  const pct = Math.round((answeredCount / total) * 100);
+
+  $("progress-text").textContent = `${answeredCount} of ${total} Answered`;
+  $("progress-circle").textContent = `${pct}%`;
+
+  const allAnswered = answeredCount === questions.length && questions.length > 0;
+  $("btn-complete-interview").disabled = !allAnswered;
+  $("complete-guidance").textContent = allAnswered 
+    ? "All answers recorded! Click above to submit." 
+    : `${questions.length - answeredCount} question(s) remaining before completion.`;
+}
+
+// 6. Recording Handlers (Live camera is kept ON throughout)
+$("btn-start-record").onclick = async () => {
+  if (!mediaStream) {
+    await initMedia();
+    if (!mediaStream) {
+      alert("Camera and microphone are required for recording.");
+      return;
+    }
+  }
+
+  recordedChunks = [];
+  try {
+    let options = { mimeType: "video/webm;codecs=vp9,opus" };
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: "video/webm" };
+    }
+    mediaRecorder = new MediaRecorder(mediaStream, options);
+  } catch (e) {
+    mediaRecorder = new MediaRecorder(mediaStream);
+  }
+
+  mediaRecorder.ondataavailable = event => {
+    if (event.data && event.data.size > 0) {
+      recordedChunks.push(event.data);
+    }
+  };
+
+  mediaRecorder.onstop = uploadResponse;
+
+  mediaRecorder.start(1000); // chunk every 1s
+  $("btn-start-record").disabled = true;
+  $("btn-stop-record").disabled = false;
+  $("recording-status-msg").textContent = "Recording in progress...";
+
+  // Start timer
+  recordingSeconds = 0;
+  $("recording-badge").classList.remove("hidden");
+  $("record-timer").textContent = "00:00";
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    recordingSeconds++;
+    const m = String(Math.floor(recordingSeconds / 60)).padStart(2, "0");
+    const s = String(recordingSeconds % 60).padStart(2, "0");
+    $("record-timer").textContent = `${m}:${s}`;
+  }, 1000);
+};
+
+$("btn-stop-record").onclick = () => {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    clearInterval(timerInterval);
+    $("recording-badge").classList.add("hidden");
+    $("btn-stop-record").disabled = true;
+    $("recording-status-msg").innerHTML = `
+      <span class="inline-flex items-center gap-1.5 text-brand-700 font-semibold">
+        <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        Uploading and scoring answer...
+      </span>
+    `;
+    mediaRecorder.stop();
+  }
+};
+
+// 7. Upload & AI Score Response
+async function uploadResponse() {
+  const item = questions[currentIndex];
+  const blob = new Blob(recordedChunks, { type: "video/webm" });
+  const form = new FormData();
+  form.append("question_id", item.id);
+  form.append("file", blob, `answer_${item.id}.webm`);
+
+  try {
+    const res = await fetch(`/api/students/interviews/${interviewId}/responses`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: form
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = { error: "Server returned unexpected response." };
+    }
+
+    if (res.ok) {
+      responsesMap[item.id] = data;
+      $("recording-status-msg").textContent = "✓ Answer scored and saved!";
+      renderQuestion();
+      renderSidebarList();
+      updateProgress();
+
+      // Automatically advance to next unanswered question
+      const nextUnanswered = questions.findIndex(q => !responsesMap[q.id]);
+      if (nextUnanswered !== -1 && nextUnanswered !== currentIndex) {
+        setTimeout(() => {
+          currentIndex = nextUnanswered;
+          renderQuestion();
+          renderSidebarList();
+        }, 1200);
+      }
+    } else {
+      $("recording-status-msg").textContent = data.error || "Failed to score answer. You can retry recording.";
+      $("btn-start-record").disabled = false;
+    }
+  } catch (err) {
+    console.error("Upload error:", err);
+    $("recording-status-msg").textContent = "Connection error. Please try again.";
+    $("btn-start-record").disabled = false;
+  }
+}
+
+// 8. Complete Interview Session
+$("btn-complete-interview").onclick = async () => {
+  $("btn-complete-interview").disabled = true;
+  $("btn-complete-interview").innerHTML = `<span>Finalizing Interview...</span>`;
+
+  try {
+    const res = await fetch(`/api/students/interviews/${interviewId}/complete`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+    const data = await res.json();
+
+    $("workspace").classList.add("hidden");
+    const resultEl = $("result");
+    resultEl.classList.remove("hidden");
+
+    if (data.passed) {
+      resultEl.innerHTML = `
+        <div class="h-16 w-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-3xl mx-auto mb-4">
+          &#10003;
+        </div>
+        <h1 class="text-3xl font-bold text-ink">Interview Passed!</h1>
+        <p class="text-lg text-brand-700 font-semibold mt-2">Overall Score: ${data.overall_score_pct}%</p>
+        <p class="text-brand-600 text-sm max-w-md mx-auto mt-2">${data.message || "Your application has been officially submitted to the hiring team."}</p>
+        <div class="pt-6 flex justify-center gap-4">
+          <a href="/dashboard/student/applications" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm shadow-sm">
+            View My Applications &rarr;
+          </a>
+          <a href="/dashboard/student/roles" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
+            Explore More Roles
+          </a>
+        </div>
+      `;
+    } else {
+      resultEl.innerHTML = `
+        <div class="h-16 w-16 rounded-full bg-sun-100 text-sun-700 flex items-center justify-center text-3xl mx-auto mb-4">
+          &#128260;
+        </div>
+        <h1 class="text-3xl font-bold text-ink">Interview Completed</h1>
+        <p class="text-lg text-brand-700 font-semibold mt-2">Overall Score: ${data.overall_score_pct}%</p>
+        <p class="text-brand-600 text-sm max-w-md mx-auto mt-2">${data.message || "Score was below the passing threshold. Review recommended learning paths to sharpen your skills before retrying."}</p>
+        <div class="pt-6 flex justify-center gap-4">
+          <a href="/dashboard/student/courses" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm shadow-sm">
+            Explore Learning Paths &rarr;
+          </a>
+          <a href="/dashboard/student/roles" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
+            Explore Other Roles
+          </a>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error("Completion error:", err);
+    alert("Could not complete interview. Please check your connection and try again.");
+    $("btn-complete-interview").disabled = false;
+    $("btn-complete-interview").innerHTML = `<span>Complete Interview &rarr;</span>`;
+  }
+};
+
+loadInterview();
+</script>
+</body>
+</html>

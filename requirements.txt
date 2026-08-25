@@ -1,0 +1,14 @@
+Flask
+Flask-SocketIO
+python-socketio
+eventlet
+supabase
+PyJWT
+python-dotenv
+langchain
+langchain-google-genai
+google-generativeai
+pydantic
+werkzeug
+pypdf
+python-docx

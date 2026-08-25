@@ -1,0 +1,304 @@
+{% extends "dashboard/base_layout.html" %}
+
+{% block page_title %}Students & Candidates · TalentForge{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/industry" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
+  <a href="/dashboard/industry/candidates" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Students & Candidates</a>
+  <a href="/dashboard/industry/postings" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Postings</a>
+  <a href="/dashboard/industry/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Courses</a>
+</nav>
+
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/industry/network" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Talent network</a>
+  <a href="/dashboard/industry/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Campus events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-ink">Students & Candidates</h1>
+      <p id="page-subtitle" class="text-brand-600 mt-1">Connect with students and review top candidates.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <input id="student-search" type="text" placeholder="Search by name, skill, degree…" class="w-64 border border-brand-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 bg-white" />
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="flex items-center gap-4 border-b border-brand-100 text-sm">
+    <button id="tab-college" class="tab-btn pb-3 border-b-2 border-ink font-bold text-ink flex items-center gap-2">
+      <span>🎓 College Students</span>
+      <span id="badge-college-count" class="bg-brand-100 text-brand-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+    </button>
+    <button id="tab-applicants" class="tab-btn pb-3 border-b-2 border-transparent text-brand-500 hover:text-ink font-medium flex items-center gap-2">
+      <span>💼 Job Applicants</span>
+      <span id="badge-applicants-count" class="bg-brand-50 text-brand-600 text-xs px-2 py-0.5 rounded-full font-medium">0</span>
+    </button>
+  </div>
+
+  <!-- College Header Banner -->
+  <div id="college-banner" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center text-lg font-bold">🏛️</div>
+      <div>
+        <h2 id="banner-college-name" class="font-bold text-emerald-900 text-base">Jabalpur Engineering College (JEC)</h2>
+        <p class="text-xs text-emerald-700">Displaying all verified enrolled students from your college cohort.</p>
+      </div>
+    </div>
+    <span class="text-xs font-semibold bg-white text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full shadow-xs">Mentor Verified</span>
+  </div>
+
+  <!-- Grid Container -->
+  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5" id="candidates-grid">
+    <div class="col-span-full bg-white border border-brand-100 rounded-2xl p-12 text-center text-brand-600">
+      <div class="animate-spin inline-block w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full mb-3"></div>
+      <p class="font-medium">Loading college students...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div id="student-modal" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-3">
+        <div id="modal-avatar" class="h-12 w-12 rounded-xl bg-brand-700 text-white font-bold text-xl flex items-center justify-center">S</div>
+        <div>
+          <h3 id="modal-name" class="text-xl font-bold text-ink">Student Name</h3>
+          <p id="modal-email" class="text-xs text-brand-500"></p>
+        </div>
+      </div>
+      <button id="modal-close" class="text-brand-400 hover:text-ink text-2xl leading-none">&times;</button>
+    </div>
+    <div class="border-t border-brand-100 pt-3 space-y-3">
+      <div>
+        <p class="text-xs text-brand-400 uppercase font-semibold">College & Degree</p>
+        <p id="modal-college" class="text-sm font-semibold text-ink mt-0.5"></p>
+        <p id="modal-degree" class="text-xs text-brand-600 mt-0.5"></p>
+      </div>
+      <div>
+        <p class="text-xs text-brand-400 uppercase font-semibold">Readiness & Verified Skills</p>
+        <div id="modal-skills" class="flex flex-wrap gap-1.5 mt-1.5"></div>
+      </div>
+    </div>
+    <div class="flex gap-2 pt-2 border-t border-brand-100">
+      <button id="modal-contact-btn" class="flex-1 bg-brand-700 hover:bg-brand-800 text-white font-medium py-2 rounded-xl text-sm transition">
+        Offer Mentorship / Contact
+      </button>
+      <button onclick="document.getElementById('student-modal').classList.add('hidden')" class="px-4 py-2 border border-brand-200 rounded-xl text-sm font-medium hover:bg-brand-50">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentTab = "college";
+let collegeStudentsList = [];
+let applicantsList = [];
+
+function esc(str) {
+  return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+async function loadData() {
+  try {
+    const headers = { "Authorization": `Bearer ${accessToken}` };
+    const [collegeRes, applicantsRes] = await Promise.all([
+      fetch("/api/industry/college-students", { headers }),
+      fetch("/api/industry/candidates/recommended", { headers })
+    ]);
+
+    const collegeData = collegeRes.ok ? await collegeRes.json() : { students: [], mentor_college: "" };
+    collegeStudentsList = collegeData.students || [];
+    applicantsList = applicantsRes.ok ? await applicantsRes.json() : [];
+
+    const collegeName = collegeData.mentor_college || "Your College";
+    if (collegeData.mentor_college) {
+      document.getElementById("college-banner").classList.remove("hidden");
+      document.getElementById("banner-college-name").textContent = collegeData.mentor_college;
+      document.getElementById("page-subtitle").textContent = `Mentoring and connecting with students from ${collegeData.mentor_college}.`;
+    }
+
+    document.getElementById("badge-college-count").textContent = collegeStudentsList.length;
+    document.getElementById("badge-applicants-count").textContent = applicantsList.length;
+
+    renderCurrentView();
+  } catch (err) {
+    console.error("Failed to load students:", err);
+    document.getElementById("candidates-grid").innerHTML = `
+      <div class="col-span-full bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700">
+        Could not load student directory. Please try again.
+      </div>`;
+  }
+}
+
+function renderCurrentView() {
+  const query = (document.getElementById("student-search").value || "").toLowerCase().trim();
+  const grid = document.getElementById("candidates-grid");
+
+  if (currentTab === "college") {
+    const filtered = collegeStudentsList.filter(s => 
+      !query || 
+      s.name.toLowerCase().includes(query) || 
+      s.degree.toLowerCase().includes(query) ||
+      (s.skills || []).some(k => k.toLowerCase().includes(query)) ||
+      s.college_name.toLowerCase().includes(query)
+    );
+
+    if (!filtered.length) {
+      grid.innerHTML = `
+        <div class="col-span-full bg-white border border-brand-100 rounded-2xl p-12 text-center">
+          <p class="text-lg font-bold text-ink">No students found</p>
+          <p class="text-sm text-brand-600 mt-1">${query ? "Try adjusting your search keywords." : "Students from your college will appear here as they register."}</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(s => {
+      const initial = (s.name || "S")[0].toUpperCase();
+      const skills = s.skills || [];
+      const score = s.score_pct || 85;
+
+      return `
+      <div class="bg-white border border-brand-100 rounded-2xl p-5 hover:shadow-md transition flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="h-11 w-11 rounded-xl bg-brand-700 text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-xs">${initial}</div>
+              <div class="min-w-0">
+                <h3 class="font-bold text-ink text-base truncate">${esc(s.name)}</h3>
+                <p class="text-xs text-brand-500 truncate">${esc(s.email)}</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                ${score}% Score
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-3 bg-brand-50/70 p-2.5 rounded-xl border border-brand-100 text-xs text-brand-800">
+            <p class="font-semibold truncate">🏛️ ${esc(s.college_name)}</p>
+            <p class="text-brand-600 truncate mt-0.5">${esc(s.degree)}</p>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 mt-3">
+            ${skills.slice(0, 5).map(sk => `<span class="text-[11px] bg-brand-50 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-md font-medium">${esc(sk)}</span>`).join("")}
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-brand-100 flex items-center gap-2">
+          <button onclick="openStudentModal(${JSON.stringify(s).replace(/"/g, '&quot;')})" class="flex-1 bg-brand-700 hover:bg-brand-800 text-white text-xs font-semibold py-2 rounded-xl transition">
+            View Profile &rarr;
+          </button>
+          <a href="mailto:${esc(s.email)}?subject=Mentorship%20from%20TalentForge" class="px-3 py-2 border border-brand-200 hover:bg-brand-50 text-brand-700 text-xs font-semibold rounded-xl transition" title="Email student">
+            ✉️ Contact
+          </a>
+        </div>
+      </div>`;
+    }).join("");
+  } else {
+    // Applicants Tab
+    const filtered = applicantsList.filter(a =>
+      !query ||
+      (a.users?.name || "").toLowerCase().includes(query) ||
+      (a.users?.email || "").toLowerCase().includes(query)
+    );
+
+    if (!filtered.length) {
+      grid.innerHTML = `
+        <div class="col-span-full bg-white border border-brand-100 rounded-2xl p-12 text-center">
+          <p class="text-lg font-bold text-ink">No applicants yet</p>
+          <p class="text-sm text-brand-600 mt-1">Post a job or internship opportunity to start receiving candidate applications.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map((a, idx) => {
+      const name = a.users?.name || "Applicant";
+      const initial = name[0].toUpperCase();
+      const score = a.interviews?.overall_score_pct ? Math.round(a.interviews.overall_score_pct) : "—";
+      const college = a.student_profiles?.college_name || "Enrolled Student";
+
+      return `
+      <div class="bg-white border border-brand-100 rounded-2xl p-5 hover:shadow-md transition flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="h-11 w-11 rounded-xl bg-sky-700 text-white font-bold text-lg flex items-center justify-center shrink-0">${initial}</div>
+              <div class="min-w-0">
+                <h3 class="font-bold text-ink text-base truncate">${esc(name)}</h3>
+                <p class="text-xs text-brand-500 truncate">${esc(a.users?.email || '')}</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="text-[10px] text-brand-400 font-semibold uppercase">AI Score</p>
+              <p class="text-lg font-bold text-sky-700">${score}%</p>
+            </div>
+          </div>
+          <p class="text-xs text-brand-600 mt-2">🏛️ ${esc(college)}</p>
+          <div class="flex flex-wrap gap-1 mt-2">
+            ${(a.student_profiles?.validated_skills || []).slice(0, 4).map(sk => `<span class="text-[10px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded">${esc(sk)}</span>`).join("")}
+          </div>
+        </div>
+        <div class="pt-3 border-t border-brand-100 flex items-center gap-2">
+          <a href="/dashboard/industry/postings" class="flex-1 text-center bg-brand-700 hover:bg-brand-800 text-white text-xs font-semibold py-2 rounded-xl transition">
+            Review Application
+          </a>
+        </div>
+      </div>`;
+    }).join("");
+  }
+}
+
+function openStudentModal(student) {
+  document.getElementById("modal-avatar").textContent = (student.name || "S")[0].toUpperCase();
+  document.getElementById("modal-name").textContent = student.name;
+  document.getElementById("modal-email").textContent = student.email;
+  document.getElementById("modal-college").textContent = `🏛️ ${student.college_name}`;
+  document.getElementById("modal-degree").textContent = `🎓 ${student.degree} • Verified Score: ${student.score_pct}%`;
+  
+  const skillsEl = document.getElementById("modal-skills");
+  skillsEl.innerHTML = (student.skills || []).map(sk => `<span class="text-xs bg-brand-50 text-brand-800 border border-brand-200 px-2.5 py-1 rounded-lg font-medium">${esc(sk)}</span>`).join("") || "<p class='text-xs text-brand-400'>No skills listed.</p>";
+
+  const contactBtn = document.getElementById("modal-contact-btn");
+  contactBtn.onclick = () => {
+    window.location.href = `mailto:${encodeURIComponent(student.email)}?subject=Mentorship%20Discussion%20-%20TalentForge&body=Hi%20${encodeURIComponent(student.name)},%0D%0A%0D%0AI%20am%20a%20mentor%20at%20${encodeURIComponent(student.college_name)}%20on%20TalentForge.%20I%20would%20love%20to%20help%20you%20with%20your%20career%20and%20project%20goals.`;
+  };
+
+  document.getElementById("student-modal").classList.remove("hidden");
+}
+
+document.getElementById("modal-close").addEventListener("click", () => {
+  document.getElementById("student-modal").classList.add("hidden");
+});
+
+document.getElementById("tab-college").addEventListener("click", () => {
+  currentTab = "college";
+  document.getElementById("tab-college").className = "tab-btn pb-3 border-b-2 border-ink font-bold text-ink flex items-center gap-2";
+  document.getElementById("tab-applicants").className = "tab-btn pb-3 border-b-2 border-transparent text-brand-500 hover:text-ink font-medium flex items-center gap-2";
+  renderCurrentView();
+});
+
+document.getElementById("tab-applicants").addEventListener("click", () => {
+  currentTab = "applicants";
+  document.getElementById("tab-applicants").className = "tab-btn pb-3 border-b-2 border-ink font-bold text-ink flex items-center gap-2";
+  document.getElementById("tab-college").className = "tab-btn pb-3 border-b-2 border-transparent text-brand-500 hover:text-ink font-medium flex items-center gap-2";
+  renderCurrentView();
+});
+
+document.getElementById("student-search").addEventListener("input", renderCurrentView);
+
+loadData();
+</script>
+{% endblock %}
+

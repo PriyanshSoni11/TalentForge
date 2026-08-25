@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ role_label }} registration &middot; TalentForge</title>
+  <link rel="icon" type="image/svg+xml" href="/static/img/icon.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#FAF9F5] min-h-screen flex items-center justify-center p-4">
+  <form id="register-form" enctype="multipart/form-data" class="bg-white p-8 rounded-2xl shadow-sm border border-green-100 w-full max-w-sm space-y-4">
+    <a href="/" class="block"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-9 w-auto mx-auto" /></a>
+    <h1 class="text-xl font-semibold text-green-900 text-center">Register as {{ role_label }}</h1>
+    <p class="text-sm text-center text-green-700">Create your {{ role_label|lower }} account.</p>
+    <input type="hidden" name="role" value="{{ role }}" />
+
+    <label class="block text-sm font-medium text-green-900">Name
+      <input type="text" name="name" required placeholder="e.g. John Doe" class="w-full mt-1 px-3.5 py-2.5 bg-white border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-600 text-sm transition" />
+    </label>
+
+    {% if role == "student" or role_label == "Mentor" %}
+    <label class="block text-sm font-medium text-green-900">College / University name
+      <input type="text" name="college_name" required placeholder="e.g. Jabalpur Engineering College (JEC)" class="w-full mt-1 px-3.5 py-2.5 bg-white border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-600 text-sm transition" />
+    </label>
+    {% endif %}
+
+    <label class="block text-sm font-medium text-green-900">Email address
+      <input type="email" name="email" required placeholder="you@example.com" class="w-full mt-1 px-3.5 py-2.5 bg-white border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-600 text-sm transition" />
+    </label>
+
+    <label class="block text-sm font-medium text-green-900">Password
+      <input type="password" name="password" minlength="8" required placeholder="At least 8 characters" class="w-full mt-1 px-3.5 py-2.5 bg-white border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-600 text-sm transition" />
+    </label>
+
+    {% if role == "student" %}
+    <!-- Resume Upload - Last Field before submit with improved interactive UI -->
+    <div class="space-y-1.5">
+      <label class="block text-sm font-medium text-green-900">Resume</label>
+      <div id="drop-zone" class="relative border-2 border-dashed border-green-300 hover:border-green-600 bg-green-50/50 hover:bg-green-50/90 rounded-xl p-3.5 transition cursor-pointer text-center group">
+        <input type="file" id="resume-input" name="resume" accept=".pdf,.docx" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+        
+        <div id="upload-idle" class="flex items-center justify-center gap-3 py-1">
+          <div class="h-9 w-9 rounded-lg bg-white border border-green-200 shadow-xs flex items-center justify-center text-green-700 shrink-0 group-hover:scale-105 transition">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="text-left">
+            <p class="text-xs font-semibold text-green-950"><span class="text-green-700 underline underline-offset-2">Browse file</span> or drag &amp; drop</p>
+            <p class="text-[11px] text-green-600">PDF, DOCX (Max 10MB)</p>
+          </div>
+        </div>
+
+        <div id="upload-selected" class="hidden flex items-center justify-center gap-2.5 py-1">
+          <span class="h-7 w-7 rounded-lg bg-green-700 text-white flex items-center justify-center text-xs font-bold shrink-0">✓</span>
+          <div class="text-left truncate max-w-[200px]">
+            <p id="file-name" class="text-xs font-bold text-green-950 truncate">resume.pdf</p>
+            <p id="file-size" class="text-[10px] text-green-700">Ready for AI extraction</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <p id="error" class="text-xs text-red-600 hidden bg-red-50 p-2.5 rounded-lg border border-red-200"></p>
+    <button id="submit-button" type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl font-semibold shadow-xs hover:shadow-md transition text-sm">
+      Create account
+    </button>
+    <p class="text-xs text-center text-green-700 pt-1">Already registered? <a href="{{ login_url }}" class="font-bold underline underline-offset-2">Log in as {{ role_label|lower }}</a></p>
+  </form>
+  <script>
+    const form = document.getElementById("register-form");
+    const errorEl = document.getElementById("error");
+    const resumeInput = document.getElementById("resume-input");
+
+    if (resumeInput) {
+      resumeInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          document.getElementById("upload-idle").classList.add("hidden");
+          document.getElementById("upload-selected").classList.remove("hidden");
+          document.getElementById("file-name").textContent = file.name;
+          const sizeKb = Math.round(file.size / 1024);
+          document.getElementById("file-size").textContent = `${sizeKb} KB • Ready for AI extraction`;
+        }
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorEl.classList.add("hidden");
+      const submitButton = document.getElementById("submit-button");
+      submitButton.disabled = true;
+      submitButton.innerHTML = `<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Processing resume &amp; creating account...</span>`;
+      try {
+        const response = await fetch("/api/auth/register", { method: "POST", body: new FormData(form) });
+        const raw = await response.text();
+        let data;
+        try { data = JSON.parse(raw); } catch { data = { error: `Registration failed (${response.status})` }; }
+        if (!response.ok) {
+          errorEl.textContent = data.error || "Registration failed";
+          errorEl.classList.remove("hidden");
+          submitButton.disabled = false;
+          submitButton.textContent = "Create account";
+          return;
+        }
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        localStorage.setItem("role", data.user.role);
+        localStorage.setItem("user_id", data.user.id);
+        window.location.href = data.user.role === "student" ? "/assessment" : "/dashboard/industry";
+      } catch (error) {
+        errorEl.textContent = "Network error, please try again.";
+        errorEl.classList.remove("hidden");
+        submitButton.disabled = false;
+        submitButton.textContent = "Create account";
+      }
+    });
+  </script>
+</body>
+</html>

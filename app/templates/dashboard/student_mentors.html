@@ -1,0 +1,117 @@
+{% extends "dashboard/base_layout.html" %}
+
+{% block page_title %}Mentors · TalentForge{% endblock %}
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/student" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
+  <a href="/dashboard/student/roles" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Explore roles</a>
+  <a href="/dashboard/student/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Learning paths</a>
+  <a href="/dashboard/student/portfolio" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My portfolio</a>
+  <a href="/dashboard/student/applications" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Applications</a>
+</nav>
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/student/mentors" class="flex items-center justify-between px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">Mentors</a>
+  <a href="/dashboard/student/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Company events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold text-brand-600 mb-2">Career connections</p>
+      <h1 class="text-3xl font-bold mb-2">Find a mentor</h1>
+      <p class="text-brand-600">Ask experienced professionals for practical guidance on your next step.</p>
+    </div>
+    <div class="flex gap-2">
+      <input id="mentor-search" type="search" placeholder="Search mentors" aria-label="Search mentors" class="w-full md:w-52 border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
+      <select id="expertise-filter" aria-label="Filter by expertise" class="border border-brand-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-300"><option value="">All expertise</option></select>
+    </div>
+  </div>
+
+  <div id="notice" class="hidden rounded-lg px-4 py-3 text-sm"></div>
+  <div id="mentors-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="bg-white border border-brand-100 rounded-xl p-6 text-brand-600">Loading mentors...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const mentorToken = localStorage.getItem("access_token");
+let mentorData = [];
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[char]));
+}
+
+function showNotice(message, error = false) {
+  const notice = document.getElementById("notice");
+  notice.textContent = message;
+  notice.className = `rounded-lg px-4 py-3 text-sm ${error ? "bg-red-50 text-red-700 border border-red-200" : "bg-brand-50 text-brand-800 border border-brand-200"}`;
+}
+
+function renderMentors() {
+  const search = document.getElementById("mentor-search").value.toLowerCase();
+  const expertise = document.getElementById("expertise-filter").value;
+  const filtered = mentorData.filter(mentor => {
+    const matchesSearch = [mentor.name, mentor.headline, mentor.bio, ...(mentor.expertise || [])].join(" ").toLowerCase().includes(search);
+    return matchesSearch && (!expertise || mentor.expertise.includes(expertise));
+  });
+  const grid = document.getElementById("mentors-grid");
+  grid.innerHTML = filtered.length ? filtered.map(mentor => {
+    const status = mentor.request?.status;
+    const action = status === "pending"
+      ? `<button data-mentor="${mentor.id}" class="cancel-request w-full border border-brand-200 text-brand-700 rounded-lg py-2 text-sm font-medium hover:bg-brand-50">Cancel request</button>`
+      : status === "accepted"
+        ? `<div class="w-full text-center rounded-lg py-2 text-sm font-medium bg-brand-100 text-brand-800">Connected</div>`
+        : `<button data-mentor="${mentor.id}" class="request-mentor w-full bg-brand-700 text-white rounded-lg py-2 text-sm font-medium hover:bg-brand-800">Request mentorship</button>`;
+    return `<article class="bg-white border border-brand-100 rounded-xl p-5 flex flex-col">
+      <div class="flex items-start gap-3 mb-4"><div class="h-11 w-11 shrink-0 rounded-full bg-ink text-white flex items-center justify-center font-semibold">${escapeHtml(mentor.name).charAt(0).toUpperCase()}</div><div><h2 class="font-semibold text-ink">${escapeHtml(mentor.name)}</h2><p class="text-sm text-brand-600">${escapeHtml(mentor.headline)}</p></div></div>
+      <p class="text-sm text-brand-700 leading-relaxed mb-4 flex-1">${escapeHtml(mentor.bio || "Ready to share practical experience and career guidance.")}</p>
+      <div class="flex flex-wrap gap-1.5 mb-5">${(mentor.expertise || []).map(skill => `<span class="px-2 py-1 rounded bg-sky-50 text-sky-700 text-xs">${escapeHtml(skill)}</span>`).join("")}</div>
+      <p class="text-xs text-brand-500 mb-3">${escapeHtml(mentor.availability)}</p>${action}
+    </article>`;
+  }).join("") : `<div class="md:col-span-2 xl:col-span-3 bg-white border border-brand-100 rounded-xl p-8 text-center text-brand-600">No mentors match your search.</div>`;
+  document.querySelectorAll(".request-mentor").forEach(button => button.addEventListener("click", () => sendRequest(button.dataset.mentor)));
+  document.querySelectorAll(".cancel-request").forEach(button => button.addEventListener("click", () => cancelRequest(button.dataset.mentor)));
+}
+
+async function loadMentors() {
+  try {
+    const response = await fetch("/api/students/mentors", { headers: { "Authorization": `Bearer ${mentorToken}` } });
+    if (!response.ok) throw new Error((await response.json()).error || "Could not load mentors");
+    mentorData = await response.json();
+    const skills = [...new Set(mentorData.flatMap(mentor => mentor.expertise || []))].sort();
+    document.getElementById("expertise-filter").innerHTML = `<option value="">All expertise</option>${skills.map(skill => `<option>${escapeHtml(skill)}</option>`).join("")}`;
+    renderMentors();
+  } catch (error) {
+    document.getElementById("mentors-grid").innerHTML = `<div class="md:col-span-2 xl:col-span-3 bg-red-50 border border-red-200 rounded-xl p-6 text-red-700">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+async function sendRequest(mentorId) {
+  const message = window.prompt("Add a short note to your request (optional):", "");
+  if (message === null) return;
+  const response = await fetch(`/api/students/mentors/${mentorId}/requests`, { method: "POST", headers: { "Authorization": `Bearer ${mentorToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
+  const result = await response.json();
+  if (!response.ok) return showNotice(result.error || "Request could not be sent", true);
+  showNotice("Mentorship request sent.");
+  await loadMentors();
+}
+
+async function cancelRequest(mentorId) {
+  const response = await fetch(`/api/students/mentors/${mentorId}/requests`, { method: "DELETE", headers: { "Authorization": `Bearer ${mentorToken}` } });
+  if (!response.ok) return showNotice("Request could not be canceled", true);
+  showNotice("Request canceled.");
+  await loadMentors();
+}
+
+document.getElementById("mentor-search").addEventListener("input", renderMentors);
+document.getElementById("expertise-filter").addEventListener("change", renderMentors);
+loadMentors();
+</script>
+{% endblock %}
