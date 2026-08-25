@@ -1,57 +1,284 @@
 {% extends "dashboard/base_layout.html" %}
 
-{% block page_title %}Courses · TalentForge{% endblock %}
+{% block page_title %}Training Courses · TalentForge{% endblock %}
 
 {% block sidebar_nav %}
 <p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
 <nav class="space-y-1 mb-6">
-  <a href="/dashboard/industry" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Overview</a>
-  <a href="/dashboard/industry/candidates" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Candidates</a>
-  <a href="/dashboard/industry/postings" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">My Postings</a>
-  <a href="/dashboard/industry/courses" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-medium text-sm">My Courses</a>
+  <a href="/dashboard/industry" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Overview</a>
+  <a href="/dashboard/industry/candidates" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Candidates</a>
+  <a href="/dashboard/industry/postings" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">My Postings</a>
+  <a href="/dashboard/industry/courses" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-semibold text-sm">My Courses</a>
 </nav>
 
 <p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
 <nav class="space-y-1">
-  <a href="/dashboard/industry/network" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Talent network</a>
-  <a href="/dashboard/industry/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50">Campus events</a>
+  <a href="/dashboard/industry/network" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Talent network</a>
+  <a href="/dashboard/industry/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Campus events</a>
 </nav>
 {% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-  <div class="flex items-start justify-between">
+  <!-- Top Header Banner -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-bold mb-2">Training Courses</h1>
-      <p class="text-brand-600">Publish and manage courses to help students develop key skills.</p>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="inline-flex items-center justify-center p-1.5 rounded-lg bg-brand-50 text-brand-700">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
+            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+          </svg>
+        </span>
+        <h1 class="text-2xl sm:text-3xl font-bold text-ink tracking-tight">Training Courses</h1>
+      </div>
+      <p class="text-sm sm:text-base text-brand-600">Publish and manage curated training courses to help candidates build essential job skills.</p>
     </div>
-    <button id="publish-course-btn" class="bg-ink text-white text-sm font-medium px-5 py-3 rounded-xl hover:bg-brand-900 transition whitespace-nowrap">
-      Publish Course
+    <button id="open-create-course-btn" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Publish Course</span>
     </button>
   </div>
 
   <div class="grid gap-4" id="courses-grid">
-    <div class="bg-white border border-brand-100 rounded-2xl p-6 flex items-center justify-center min-h-96">
+    <div class="bg-white border border-brand-100 rounded-2xl p-12 flex items-center justify-center min-h-[300px]">
       <div class="text-center">
-        <p class="text-brand-700 font-medium">Loading courses...</p>
+        <div class="inline-block animate-spin w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full mb-3"></div>
+        <p class="text-brand-700 font-medium text-sm">Loading courses...</p>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Course Modal (Create & Edit) -->
+<div id="course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+  <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="course-modal-backdrop"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-brand-100 animate-in fade-in zoom-in-95 duration-150">
+    <div class="px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
+      <div class="flex items-center gap-2">
+        <div class="h-8 w-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">📚</div>
+        <h2 id="course-modal-title" class="text-lg font-bold text-ink">Publish a Course</h2>
+      </div>
+      <button id="close-course-modal" type="button" class="text-brand-400 hover:text-ink text-2xl leading-none transition">&times;</button>
+    </div>
+
+    <form id="course-form" class="p-6 overflow-y-auto space-y-4 flex-1">
+      <input type="hidden" id="course-form-id" value="" />
+      <div id="course-form-error" class="hidden bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-xl text-xs"></div>
+
+      <div>
+        <label for="course-title-input" class="block text-xs font-semibold uppercase tracking-wider text-brand-700 mb-1.5">Course Title <span class="text-red-500">*</span></label>
+        <input id="course-title-input" required type="text" placeholder="e.g., Modern Web Architecture, Machine Learning Foundations" class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
+      </div>
+
+      <div>
+        <label for="course-skills-input" class="block text-xs font-semibold uppercase tracking-wider text-brand-700 mb-1.5">Skills Covered <span class="text-red-500">*</span></label>
+        <input id="course-skills-input" required type="text" placeholder="e.g., Python, PyTorch, Deep Learning (comma-separated)" class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
+      </div>
+
+      <div>
+        <label for="course-url-input" class="block text-xs font-semibold uppercase tracking-wider text-brand-700 mb-1.5">Content / Resource URL (Optional)</label>
+        <input id="course-url-input" type="url" placeholder="https://youtube.com/... or https://coursera.org/..." class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
+      </div>
+
+      <div>
+        <label for="course-desc-input" class="block text-xs font-semibold uppercase tracking-wider text-brand-700 mb-1.5">Course Description <span class="text-red-500">*</span></label>
+        <textarea id="course-desc-input" required rows="4" placeholder="Overview of what students will learn and prerequisites…" class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition leading-relaxed"></textarea>
+      </div>
+    </form>
+
+    <div class="px-6 py-4 border-t border-brand-100 bg-offwhite/50 flex items-center justify-end gap-3">
+      <button id="cancel-course-modal" type="button" class="px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition">
+        Cancel
+      </button>
+      <button id="submit-course-btn" type="button" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center gap-2">
+        <span id="submit-course-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+        <span id="submit-course-text">Publish Course</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Course Modal -->
+<div id="delete-course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+  <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="delete-course-modal-backdrop"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-brand-100 text-center animate-in fade-in zoom-in-95 duration-150">
+    <div class="h-12 w-12 rounded-full bg-red-50 text-red-600 mx-auto mb-4 flex items-center justify-center text-xl">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-ink mb-2">Delete Training Course?</h3>
+    <p class="text-sm text-brand-600 leading-relaxed mb-6">
+      Are you sure you want to delete <strong id="delete-course-title" class="text-ink font-semibold">this course</strong>?
+    </p>
+    <div class="flex items-center gap-3">
+      <button id="cancel-delete-course-btn" type="button" class="flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition">
+        Cancel
+      </button>
+      <button id="confirm-delete-course-btn" type="button" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2">
+        <span id="delete-course-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+        <span id="delete-course-btn-text">Delete Course</span>
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-async function createCourse() {
-  const title = prompt("Course title:");
-  const description = title && prompt("Description:");
-  const skills = title && prompt("Skills covered, comma-separated:");
-  if (!title || !description || !skills) return;
-  const response = await fetch("/api/industry/courses", { method: "POST", headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ title, description, skills_covered: skills.split(",").map(skill => skill.trim()).filter(Boolean) }) });
-  if (response.ok) loadCourses(); else alert((await response.json()).error || "Could not publish course");
+let globalCourses = [];
+let pendingDeleteCourseId = null;
+
+function esc(str) {
+  if (!str) return "";
+  return String(str).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+  }[c]));
 }
-document.getElementById("publish-course-btn").addEventListener("click", createCourse);
+
+function openCreateCourseModal() {
+  document.getElementById("course-form").reset();
+  document.getElementById("course-form-id").value = "";
+  document.getElementById("course-modal-title").textContent = "Publish a Course";
+  document.getElementById("submit-course-text").textContent = "Publish Course";
+  document.getElementById("course-form-error").classList.add("hidden");
+  document.getElementById("course-modal").classList.remove("hidden");
+  document.getElementById("course-title-input").focus();
+}
+
+function openEditCourseModal(id) {
+  const course = globalCourses.find(c => c.id === id);
+  if (!course) return;
+
+  document.getElementById("course-form-id").value = course.id;
+  document.getElementById("course-title-input").value = course.title || "";
+  document.getElementById("course-skills-input").value = (course.skills_covered || []).join(", ");
+  document.getElementById("course-url-input").value = course.content_url || "";
+  document.getElementById("course-desc-input").value = course.description || "";
+  document.getElementById("course-modal-title").textContent = "Edit Training Course";
+  document.getElementById("submit-course-text").textContent = "Save Changes";
+  document.getElementById("course-form-error").classList.add("hidden");
+  document.getElementById("course-modal").classList.remove("hidden");
+}
+
+function closeCourseModal() {
+  document.getElementById("course-modal").classList.add("hidden");
+  document.getElementById("course-form").reset();
+}
+
+document.getElementById("open-create-course-btn").addEventListener("click", openCreateCourseModal);
+document.getElementById("close-course-modal").addEventListener("click", closeCourseModal);
+document.getElementById("cancel-course-modal").addEventListener("click", closeCourseModal);
+document.getElementById("course-modal-backdrop").addEventListener("click", closeCourseModal);
+
+// Submit Course Form
+document.getElementById("submit-course-btn").addEventListener("click", async () => {
+  const errorEl = document.getElementById("course-form-error");
+  const spinner = document.getElementById("submit-course-spinner");
+  const btnText = document.getElementById("submit-course-text");
+  const submitBtn = document.getElementById("submit-course-btn");
+
+  const id = document.getElementById("course-form-id").value;
+  const title = document.getElementById("course-title-input").value.trim();
+  const skillsStr = document.getElementById("course-skills-input").value.trim();
+  const content_url = document.getElementById("course-url-input").value.trim();
+  const description = document.getElementById("course-desc-input").value.trim();
+
+  if (!title || !skillsStr || !description) {
+    errorEl.textContent = "Please fill in all required fields.";
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
+  const skills = skillsStr.split(",").map(s => s.trim()).filter(Boolean);
+  errorEl.classList.add("hidden");
+  spinner.classList.remove("hidden");
+  submitBtn.disabled = true;
+
+  const payload = {
+    title, description, content_url: content_url || null,
+    skills_covered: skills
+  };
+
+  try {
+    const isEdit = Boolean(id);
+    const url = isEdit ? `/api/industry/courses/${id}` : "/api/industry/courses";
+    const method = isEdit ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to save course");
+
+    closeCourseModal();
+    loadCourses();
+  } catch (err) {
+    errorEl.textContent = err.message || "An unexpected error occurred.";
+    errorEl.classList.remove("hidden");
+  } finally {
+    spinner.classList.add("hidden");
+    submitBtn.disabled = false;
+  }
+});
+
+// Delete Course Handlers
+function openDeleteCourseModal(id) {
+  const course = globalCourses.find(c => c.id === id);
+  if (!course) return;
+  pendingDeleteCourseId = id;
+  document.getElementById("delete-course-title").textContent = `"${course.title}"`;
+  document.getElementById("delete-course-modal").classList.remove("hidden");
+}
+
+function closeDeleteCourseModal() {
+  document.getElementById("delete-course-modal").classList.add("hidden");
+  pendingDeleteCourseId = null;
+}
+
+document.getElementById("cancel-delete-course-btn").addEventListener("click", closeDeleteCourseModal);
+document.getElementById("delete-course-modal-backdrop").addEventListener("click", closeDeleteCourseModal);
+
+document.getElementById("confirm-delete-course-btn").addEventListener("click", async () => {
+  if (!pendingDeleteCourseId) return;
+
+  const confirmBtn = document.getElementById("confirm-delete-course-btn");
+  const spinner = document.getElementById("delete-course-spinner");
+  const btnText = document.getElementById("delete-course-btn-text");
+
+  confirmBtn.disabled = true;
+  spinner.classList.remove("hidden");
+  btnText.textContent = "Deleting...";
+
+  try {
+    const res = await fetch(`/api/industry/courses/${pendingDeleteCourseId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${accessToken}` }
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to delete course");
+
+    closeDeleteCourseModal();
+    loadCourses();
+  } catch (err) {
+    alert(err.message || "Could not delete course.");
+  } finally {
+    confirmBtn.disabled = false;
+    spinner.classList.add("hidden");
+    btnText.textContent = "Delete Course";
+  }
+});
 
 async function loadCourses() {
   try {
@@ -59,52 +286,72 @@ async function loadCourses() {
       headers: { "Authorization": `Bearer ${accessToken}` },
     });
     const courses = await res.json();
-    globalCourses = courses;
-    
+    globalCourses = courses || [];
+
     const coursesGrid = document.getElementById("courses-grid");
     coursesGrid.innerHTML = "";
-    
+
     if (!courses || courses.length === 0) {
       coursesGrid.innerHTML = `
-        <div class="bg-white border border-brand-100 rounded-2xl p-6 text-center">
-          <p class="text-brand-600 mb-4">No courses published yet</p>
-          <button id="create-first-course" class="bg-brand-700 text-white px-4 py-2 rounded-lg hover:bg-brand-800 transition text-sm font-medium">
-            Publish Your First Course
+        <div class="bg-white border border-brand-100 rounded-2xl p-12 text-center shadow-xs">
+          <div class="h-16 w-16 bg-brand-50 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 text-brand-700">
+            📚
+          </div>
+          <h3 class="text-lg font-bold text-ink mb-1">No courses published yet</h3>
+          <p class="text-brand-600 text-sm max-w-md mx-auto mb-6">
+            Help students prepare for your open roles by sharing learning paths and recommended training modules.
+          </p>
+          <button onclick="openCreateCourseModal()" class="inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2.5 rounded-xl hover:bg-brand-800 transition text-sm font-semibold shadow-sm">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Publish Your First Course</span>
           </button>
         </div>
       `;
-      document.getElementById("create-first-course")?.addEventListener("click", () => {
-        createCourse();
-      });
       return;
     }
 
     courses.forEach(course => {
       const card = document.createElement("div");
-      card.className = "bg-white border border-brand-100 rounded-2xl p-6";
+      card.className = "bg-white border border-brand-100 rounded-2xl p-6 shadow-xs hover:shadow-md transition space-y-4";
       card.innerHTML = `
-        <div class="flex items-start justify-between mb-3">
+        <div class="flex items-start justify-between gap-3">
           <div>
-            <h3 class="text-lg font-semibold text-ink">${course.title || "Untitled Course"}</h3>
-            <p class="text-sm text-brand-600">${course.category || "General"}</p>
+            <h3 class="text-lg sm:text-xl font-bold text-ink tracking-tight">${esc(course.title || "Untitled Course")}</h3>
+            <p class="text-xs text-brand-500 mt-0.5">${course.content_url ? `<a href="${esc(course.content_url)}" target="_blank" class="text-sky-600 hover:underline flex items-center gap-1">🔗 ${esc(course.content_url)}</a>` : "Self-guided module"}</p>
           </div>
-          <span class="px-3 py-1 rounded-full text-xs font-medium bg-sky-50 text-sky-700">
-            ${course.status || "Active"}
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+            Active
           </span>
         </div>
-        <p class="text-brand-700 text-sm mb-4">${course.description?.substring(0, 150) || ""}...</p>
-        <div class="flex items-center justify-between text-sm text-brand-500 mb-4">
-          <span>${course.enrolled_count || 0} students enrolled</span>
-          <span>${course.rating || "—"} rating</span>
+
+        <p class="text-brand-700 text-sm leading-relaxed line-clamp-2">${esc(course.description || "")}</p>
+
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-400 mb-1.5">Skills Covered</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${(course.skills_covered || []).map(skill => `
+              <span class="text-xs bg-brand-50 text-brand-800 border border-brand-100 px-2.5 py-1 rounded-lg font-medium">
+                ${esc(skill)}
+              </span>
+            `).join("")}
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button onclick="window.open('${course.content_url || '#'}', '_blank')" class="flex-1 bg-brand-700 text-white py-2 rounded-lg hover:bg-brand-800 transition text-sm font-medium">
-            View Course
-          </button>
-          <button onclick="editCourse('${course.id}')" class="flex-1 bg-brand-50 text-brand-700 py-2 rounded-lg hover:bg-brand-100 transition text-sm font-medium">
+
+        <div class="pt-3 border-t border-brand-100 flex items-center gap-2.5">
+          ${course.content_url ? `
+            <a href="${esc(course.content_url)}" target="_blank" class="flex-1 bg-brand-700 hover:bg-brand-800 text-white py-2.5 px-4 rounded-xl text-sm font-semibold transition text-center shadow-xs">
+              Open Course
+            </a>
+          ` : `
+            <div class="flex-1 text-xs text-brand-400 py-2.5">Internal Training</div>
+          `}
+          <button onclick="openEditCourseModal('${course.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 py-2.5 px-4 rounded-xl text-sm font-medium transition">
             Edit
           </button>
-          <button onclick="deleteCourse('${course.id}')" class="flex-1 bg-red-50 text-red-700 py-2 rounded-lg hover:bg-red-100 transition text-sm font-medium">
+          <button onclick="openDeleteCourseModal('${course.id}')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 px-4 rounded-xl text-sm font-medium transition">
             Delete
           </button>
         </div>
@@ -114,46 +361,11 @@ async function loadCourses() {
   } catch (err) {
     console.error("Failed to load courses:", err);
     document.getElementById("courses-grid").innerHTML = `
-      <div class="bg-red-50 border border-red-200 rounded-2xl p-6">
-        <p class="text-red-700">Failed to load courses</p>
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+        <p class="text-red-700 text-sm font-medium">Failed to load courses</p>
       </div>
     `;
   }
-}
-
-let globalCourses = [];
-
-async function editCourse(id) {
-  const course = globalCourses.find(c => c.id === id);
-  if (!course) return;
-  const title = prompt("Course title:", course.title);
-  if (title === null) return;
-  const description = prompt("Description:", course.description);
-  if (description === null) return;
-  const skillsStr = prompt("Skills covered, comma-separated:", (course.skills_covered || []).join(", "));
-  if (skillsStr === null) return;
-  const url = prompt("Content URL:", course.content_url || "");
-  if (url === null) return;
-  
-  const payload = {
-    title, description, content_url: url,
-    skills_covered: skillsStr.split(",").map(s => s.trim()).filter(Boolean)
-  };
-  
-  const res = await fetch(`/api/industry/courses/\${id}`, {
-    method: "PUT",
-    headers: { "Authorization": `Bearer \${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  if (res.ok) loadCourses(); else alert((await res.json()).error || "Could not update course");
-}
-
-async function deleteCourse(id) {
-  if (!confirm("Are you sure you want to delete this course?")) return;
-  const res = await fetch(`/api/industry/courses/\${id}`, {
-    method: "DELETE", headers: { "Authorization": `Bearer \${accessToken}` }
-  });
-  if (res.ok) loadCourses(); else alert((await res.json()).error || "Could not delete course");
 }
 
 loadCourses();

@@ -115,19 +115,30 @@ def create_job():
     if data["type"] not in {"job", "internship", "apprenticeship"}:
         return jsonify({"error": "type must be 'job', 'internship', or 'apprenticeship'"}), 400
 
+    skills = data["required_skills"]
+    if isinstance(skills, str):
+        skills = [s.strip() for s in skills.split(",") if s.strip()]
+    elif isinstance(skills, list):
+        skills = [str(s).strip() for s in skills if str(s).strip()]
+    else:
+        skills = []
+
     supabase = get_supabase()
     record = {
         "posted_by": request.user["id"],
-        "title": data["title"],
-        "description": data["description"],
-        "required_skills": data["required_skills"],
+        "title": str(data["title"]).strip(),
+        "description": str(data["description"]).strip(),
+        "required_skills": skills,
         "type": data["type"],
-        "location": data.get("location"),
-        "status": "open",
+        "location": (data.get("location") or "Remote").strip(),
+        "status": data.get("status") if data.get("status") in {"open", "closed"} else "open",
     }
-    job = supabase.table("job_postings").insert(record).execute().data[0]
-    socketio.emit("new_job_posting", job, to="students_room")
-    return jsonify(job), 201
+    try:
+        job = supabase.table("job_postings").insert(record).execute().data[0]
+        socketio.emit("new_job_posting", job, to="students_room")
+        return jsonify(job), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @industry_bp.get("/jobs/mine")
@@ -135,8 +146,8 @@ def create_job():
 @roles_required(ROLE_INDUSTRY)
 def my_jobs():
     supabase = get_supabase()
-    result = supabase.table("job_postings").select("*").eq("posted_by", request.user["id"]).execute()
-    return jsonify(result.data)
+    result = supabase.table("job_postings").select("*").eq("posted_by", request.user["id"]).order("created_at", desc=True).execute()
+    return jsonify(result.data or [])
 
 
 @industry_bp.put("/jobs/<job_id>")
@@ -150,18 +161,32 @@ def update_job(job_id):
     if data["type"] not in {"job", "internship", "apprenticeship"}:
         return jsonify({"error": "type must be 'job', 'internship', or 'apprenticeship'"}), 400
 
+    skills = data["required_skills"]
+    if isinstance(skills, str):
+        skills = [s.strip() for s in skills.split(",") if s.strip()]
+    elif isinstance(skills, list):
+        skills = [str(s).strip() for s in skills if str(s).strip()]
+    else:
+        skills = []
+
     supabase = get_supabase()
     record = {
-        "title": data["title"],
-        "description": data["description"],
-        "required_skills": data["required_skills"],
+        "title": str(data["title"]).strip(),
+        "description": str(data["description"]).strip(),
+        "required_skills": skills,
         "type": data["type"],
-        "location": data.get("location"),
+        "location": (data.get("location") or "Remote").strip(),
     }
-    result = supabase.table("job_postings").update(record).eq("id", job_id).eq("posted_by", request.user["id"]).execute()
-    if not result.data:
-        return jsonify({"error": "job not found or unauthorized"}), 404
-    return jsonify(result.data[0])
+    if "status" in data and data["status"] in {"open", "closed"}:
+        record["status"] = data["status"]
+
+    try:
+        result = supabase.table("job_postings").update(record).eq("id", job_id).eq("posted_by", request.user["id"]).execute()
+        if not result.data:
+            return jsonify({"error": "job not found or unauthorized"}), 404
+        return jsonify(result.data[0])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @industry_bp.delete("/jobs/<job_id>")
@@ -169,12 +194,42 @@ def update_job(job_id):
 @roles_required(ROLE_INDUSTRY)
 def delete_job(job_id):
     supabase = get_supabase()
-    # Delete related applications first
-    supabase.table("applications").delete().eq("job_posting_id", job_id).execute()
-    result = supabase.table("job_postings").delete().eq("id", job_id).eq("posted_by", request.user["id"]).execute()
-    if not result.data:
-        return jsonify({"error": "job not found or unauthorized"}), 404
-    return jsonify({"success": True})
+    try:
+        # Verify ownership
+        owned = supabase.table("job_postings").select("id").eq("id", job_id).eq("posted_by", request.user["id"]).execute()
+        if not owned.data:
+            return jsonify({"error": "Job posting not found or unauthorized"}), 404
+
+        # Clean up related saved_jobs
+        try:
+            supabase.table("saved_jobs").delete().eq("job_posting_id", job_id).execute()
+        except Exception:
+            pass
+
+        # Clean up related applications
+        try:
+            supabase.table("applications").delete().eq("job_posting_id", job_id).execute()
+        except Exception:
+            pass
+
+        # Clean up related interviews & questions
+        try:
+            interviews = supabase.table("interviews").select("id").eq("job_posting_id", job_id).execute().data
+            if interviews:
+                for iv in interviews:
+                    try:
+                        supabase.table("interview_questions").delete().eq("interview_id", iv["id"]).execute()
+                    except Exception:
+                        pass
+                supabase.table("interviews").delete().eq("job_posting_id", job_id).execute()
+        except Exception:
+            pass
+
+        # Delete the job posting
+        result = supabase.table("job_postings").delete().eq("id", job_id).eq("posted_by", request.user["id"]).execute()
+        return jsonify({"success": True, "message": "Job posting deleted successfully"})
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete job posting: {str(e)}"}), 500
 
 
 @industry_bp.post("/courses")
@@ -186,17 +241,28 @@ def publish_course():
     if not all(data.get(f) for f in required):
         return jsonify({"error": f"{required} are required"}), 400
 
+    skills = data["skills_covered"]
+    if isinstance(skills, str):
+        skills = [s.strip() for s in skills.split(",") if s.strip()]
+    elif isinstance(skills, list):
+        skills = [str(s).strip() for s in skills if str(s).strip()]
+    else:
+        skills = []
+
     supabase = get_supabase()
     record = {
         "published_by": request.user["id"],
-        "title": data["title"],
-        "description": data["description"],
-        "skills_covered": data["skills_covered"],
+        "title": str(data["title"]).strip(),
+        "description": str(data["description"]).strip(),
+        "skills_covered": skills,
         "content_url": data.get("content_url"),
     }
-    course = supabase.table("courses").insert(record).execute().data[0]
-    socketio.emit("new_course", course, to="students_room")
-    return jsonify(course), 201
+    try:
+        course = supabase.table("courses").insert(record).execute().data[0]
+        socketio.emit("new_course", course, to="students_room")
+        return jsonify(course), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @industry_bp.get("/courses/mine")
@@ -204,8 +270,8 @@ def publish_course():
 @roles_required(ROLE_INDUSTRY)
 def my_courses():
     supabase = get_supabase()
-    result = supabase.table("courses").select("*").eq("published_by", request.user["id"]).execute()
-    return jsonify(result.data)
+    result = supabase.table("courses").select("*").eq("published_by", request.user["id"]).order("created_at", desc=True).execute()
+    return jsonify(result.data or [])
 
 
 @industry_bp.put("/courses/<course_id>")
@@ -217,17 +283,28 @@ def update_course(course_id):
     if not all(data.get(f) for f in required):
         return jsonify({"error": f"{required} are required"}), 400
 
+    skills = data["skills_covered"]
+    if isinstance(skills, str):
+        skills = [s.strip() for s in skills.split(",") if s.strip()]
+    elif isinstance(skills, list):
+        skills = [str(s).strip() for s in skills if str(s).strip()]
+    else:
+        skills = []
+
     supabase = get_supabase()
     record = {
-        "title": data["title"],
-        "description": data["description"],
-        "skills_covered": data["skills_covered"],
+        "title": str(data["title"]).strip(),
+        "description": str(data["description"]).strip(),
+        "skills_covered": skills,
         "content_url": data.get("content_url"),
     }
-    result = supabase.table("courses").update(record).eq("id", course_id).eq("published_by", request.user["id"]).execute()
-    if not result.data:
-        return jsonify({"error": "course not found or unauthorized"}), 404
-    return jsonify(result.data[0])
+    try:
+        result = supabase.table("courses").update(record).eq("id", course_id).eq("published_by", request.user["id"]).execute()
+        if not result.data:
+            return jsonify({"error": "course not found or unauthorized"}), 404
+        return jsonify(result.data[0])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @industry_bp.delete("/courses/<course_id>")
@@ -235,12 +312,18 @@ def update_course(course_id):
 @roles_required(ROLE_INDUSTRY)
 def delete_course(course_id):
     supabase = get_supabase()
-    # Delete related enrollments first
-    supabase.table("course_enrollments").delete().eq("course_id", course_id).execute()
-    result = supabase.table("courses").delete().eq("id", course_id).eq("published_by", request.user["id"]).execute()
-    if not result.data:
-        return jsonify({"error": "course not found or unauthorized"}), 404
-    return jsonify({"success": True})
+    try:
+        # Delete related enrollments first
+        try:
+            supabase.table("course_enrollments").delete().eq("course_id", course_id).execute()
+        except Exception:
+            pass
+        result = supabase.table("courses").delete().eq("id", course_id).eq("published_by", request.user["id"]).execute()
+        if not result.data:
+            return jsonify({"error": "course not found or unauthorized"}), 404
+        return jsonify({"success": True, "message": "Course deleted successfully"})
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete course: {str(e)}"}), 500
 
 
 @industry_bp.get("/jobs/<job_id>/applicants")
@@ -248,29 +331,51 @@ def delete_course(course_id):
 @roles_required(ROLE_INDUSTRY)
 def applicants(job_id):
     supabase = get_supabase()
-    owned = supabase.table("job_postings").select("id").eq("id", job_id).eq("posted_by", request.user["id"]).execute()
+    owned = supabase.table("job_postings").select("id, title").eq("id", job_id).eq("posted_by", request.user["id"]).execute()
     if not owned.data:
         return jsonify({"error": "not found"}), 404
 
-    result = supabase.table("applications").select(
-        "*, student_profiles(parsed_resume, strengths, weaknesses, validated_skills), "
-        "interviews(overall_score_pct, passed)"
-    ).eq("job_posting_id", job_id).execute()
+    try:
+        result = supabase.table("applications").select(
+            "*, users(id, name, email), student_profiles(parsed_resume, strengths, weaknesses, validated_skills, college_name), "
+            "interviews(overall_score_pct, passed, status)"
+        ).eq("job_posting_id", job_id).order("created_at", desc=True).execute()
+        apps_data = result.data or []
+    except Exception:
+        result = supabase.table("applications").select(
+            "*, student_profiles(parsed_resume, strengths, weaknesses, validated_skills, college_name), "
+            "interviews(overall_score_pct, passed, status)"
+        ).eq("job_posting_id", job_id).order("created_at", desc=True).execute()
+        apps_data = result.data or []
+        # Enrich users manually if joined syntax had issues
+        student_ids = [row["student_id"] for row in apps_data if row.get("student_id")]
+        if student_ids:
+            try:
+                users_res = supabase.table("users").select("id, name, email").in_("id", student_ids).execute().data
+                user_map = {u["id"]: u for u in (users_res or [])}
+                for row in apps_data:
+                    row["users"] = user_map.get(row.get("student_id"), {})
+            except Exception:
+                pass
 
     recruiter_rows = supabase.table("users").select("name").eq("id", request.user["id"]).execute().data
     recruiter_name = recruiter_rows[0]["name"] if recruiter_rows else "A recruiter"
 
-    for row in result.data:
-        student_id = row["student_id"]
-        supabase.table("activity_log").insert({
-            "user_id": student_id, "type": "portfolio_viewed",
-            "title": "Portfolio viewed", "subtitle": f"{recruiter_name} viewed your profile",
-        }).execute()
-        current = supabase.table("student_profiles").select("portfolio_views").eq("user_id", student_id).execute().data
-        current_views = current[0]["portfolio_views"] if current else 0
-        supabase.table("student_profiles").update({"portfolio_views": (current_views or 0) + 1}).eq("user_id", student_id).execute()
+    for row in apps_data:
+        student_id = row.get("student_id")
+        if student_id:
+            try:
+                supabase.table("activity_log").insert({
+                    "user_id": student_id, "type": "portfolio_viewed",
+                    "title": "Portfolio viewed", "subtitle": f"{recruiter_name} viewed your profile",
+                }).execute()
+                current = supabase.table("student_profiles").select("portfolio_views").eq("user_id", student_id).execute().data
+                current_views = current[0]["portfolio_views"] if current else 0
+                supabase.table("student_profiles").update({"portfolio_views": (current_views or 0) + 1}).eq("user_id", student_id).execute()
+            except Exception:
+                pass
 
-    return jsonify(result.data)
+    return jsonify(apps_data)
 
 
 @industry_bp.get("/college-students")
