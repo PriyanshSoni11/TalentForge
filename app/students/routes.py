@@ -563,13 +563,19 @@ def complete_interview(interview_id):
     application = None
     if passed:
         interview = supabase.table("interviews").select(
-            "student_id, job_posting_id, job_postings(title)"
+            "student_id, job_posting_id, job_postings(title, posted_by)"
         ).eq("id", interview_id).execute().data[0]
         application = supabase.table("applications").insert({
             "job_posting_id": interview["job_posting_id"], "student_id": interview["student_id"],
             "interview_id": interview_id, "status": "submitted",
         }).execute().data[0]
-        socketio.emit("new_applicant", application, to=f"user_{interview['job_posting_id']}")
+
+        posted_by = (interview.get("job_postings") or {}).get("posted_by")
+        if posted_by:
+            socketio.emit("new_applicant", application, to=f"user_{posted_by}")
+        socketio.emit("new_applicant", application, to="industrys_room")
+        socketio.emit("new_applicant", application)
+
         job_title = (interview.get("job_postings") or {}).get("title", "a posting")
         supabase.table("activity_log").insert({
             "user_id": interview["student_id"], "type": "application_submitted",

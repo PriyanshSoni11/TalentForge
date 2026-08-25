@@ -34,7 +34,7 @@
       </div>
       <p class="text-sm sm:text-base text-brand-600">Create, manage, and track candidate applications across all your active roles.</p>
     </div>
-    <button id="open-create-job-btn" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95">
+    <button id="open-create-job-btn" type="button" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95 cursor-pointer">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -77,7 +77,7 @@
   </div>
 </div>
 
-<!-- Create / Edit Job Modal -->
+<!-- Create / Edit Job Dialog Modal -->
 <div id="job-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="job-modal-backdrop"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-brand-100 animate-in fade-in zoom-in-95 duration-150">
@@ -86,7 +86,7 @@
         <div class="h-8 w-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">✦</div>
         <h2 id="job-modal-title" class="text-lg font-bold text-ink">Post a New Opportunity</h2>
       </div>
-      <button id="close-job-modal" type="button" class="text-brand-400 hover:text-ink text-2xl leading-none transition">&times;</button>
+      <button id="close-job-modal" type="button" aria-label="Close dialog" class="text-brand-400 hover:text-ink text-2xl leading-none transition cursor-pointer">&times;</button>
     </div>
 
     <form id="job-form" class="p-6 overflow-y-auto space-y-4 flex-1">
@@ -126,9 +126,9 @@
         <input id="job-location-input" required type="text" placeholder="e.g., Remote, San Francisco, CA, Hybrid - New York" class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
         <div class="flex items-center gap-1.5 mt-2">
           <span class="text-[11px] text-brand-400 font-medium">Quick presets:</span>
-          <button type="button" onclick="setLocationPreset('Remote')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">Remote</button>
-          <button type="button" onclick="setLocationPreset('Hybrid')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">Hybrid</button>
-          <button type="button" onclick="setLocationPreset('On-site')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">On-site</button>
+          <button type="button" onclick="setLocationPreset('Remote')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">Remote</button>
+          <button type="button" onclick="setLocationPreset('Hybrid')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">Hybrid</button>
+          <button type="button" onclick="setLocationPreset('On-site')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">On-site</button>
         </div>
       </div>
 
@@ -138,12 +138,12 @@
         <input id="job-skills-input" required type="text" placeholder="e.g., Python, React, PostgreSQL, Docker, FastAPI (comma-separated)" class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
         <div class="flex flex-wrap items-center gap-1.5 mt-2">
           <span class="text-[11px] text-brand-400 font-medium">Suggestions:</span>
-          <button type="button" onclick="addSkillSuggestion('Python')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">+ Python</button>
-          <button type="button" onclick="addSkillSuggestion('React')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">+ React</button>
-          <button type="button" onclick="addSkillSuggestion('JavaScript')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">+ JavaScript</button>
-          <button type="button" onclick="addSkillSuggestion('SQL')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">+ SQL</button>
-          <button type="button" onclick="addSkillSuggestion('Machine Learning')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">+ Machine Learning</button>
-          <button type="button" onclick="addSkillSuggestion('Node.js')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition">+ Node.js</button>
+          <button type="button" onclick="addSkillSuggestion('Python')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">+ Python</button>
+          <button type="button" onclick="addSkillSuggestion('React')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">+ React</button>
+          <button type="button" onclick="addSkillSuggestion('JavaScript')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">+ JavaScript</button>
+          <button type="button" onclick="addSkillSuggestion('SQL')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">+ SQL</button>
+          <button type="button" onclick="addSkillSuggestion('Machine Learning')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">+ Machine Learning</button>
+          <button type="button" onclick="addSkillSuggestion('Node.js')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">+ Node.js</button>
         </div>
       </div>
 
@@ -155,10 +155,10 @@
     </form>
 
     <div class="px-6 py-4 border-t border-brand-100 bg-offwhite/50 flex items-center justify-end gap-3">
-      <button id="cancel-job-modal" type="button" class="px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition">
+      <button id="cancel-job-modal" type="button" class="px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition cursor-pointer">
         Cancel
       </button>
-      <button id="submit-job-btn" type="button" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center gap-2">
+      <button id="submit-job-btn" type="button" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center gap-2 cursor-pointer">
         <span id="submit-job-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span id="submit-job-text">Save Posting</span>
       </button>
@@ -166,7 +166,7 @@
   </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Confirmation Dialog Modal -->
 <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="delete-modal-backdrop"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-brand-100 text-center animate-in fade-in zoom-in-95 duration-150">
@@ -183,10 +183,10 @@
       This will permanently delete the post and all candidate applications submitted for it.
     </p>
     <div class="flex items-center gap-3">
-      <button id="cancel-delete-btn" type="button" class="flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition">
+      <button id="cancel-delete-btn" type="button" class="flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition cursor-pointer">
         Cancel
       </button>
-      <button id="confirm-delete-btn" type="button" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2">
+      <button id="confirm-delete-btn" type="button" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
         <span id="delete-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span id="delete-btn-text">Delete Posting</span>
       </button>
@@ -194,18 +194,32 @@
   </div>
 </div>
 
-<!-- Applicants Modal -->
+<!-- Applicants Dialog Modal with Real-time Selection -->
 <div id="applicants-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="applicants-modal-title">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="applicants-modal-backdrop"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-brand-100 animate-in fade-in zoom-in-95 duration-150">
     <div class="px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
       <div>
-        <h2 id="applicants-modal-title" class="text-xl font-bold text-ink">Applicants</h2>
-        <p id="applicants-modal-subtitle" class="text-xs text-brand-600 mt-0.5">Review candidates and AI interview scores</p>
+        <div class="flex items-center gap-2">
+          <h2 id="applicants-modal-title" class="text-xl font-bold text-ink">Applicants</h2>
+          <span id="applicants-count-badge" class="bg-brand-100 text-brand-800 text-xs px-2.5 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <p id="applicants-modal-subtitle" class="text-xs text-brand-600 mt-0.5">Select candidates and manage application statuses in real time</p>
       </div>
-      <button id="close-applicants-modal" class="text-brand-400 hover:text-ink text-2xl leading-none transition">&times;</button>
+      <button id="close-applicants-modal" type="button" aria-label="Close dialog" class="text-brand-400 hover:text-ink text-2xl leading-none transition cursor-pointer">&times;</button>
     </div>
-    <div class="overflow-y-auto flex-1 p-6 space-y-3" id="applicants-list">
+
+    <!-- Candidate Filter Tabs in Modal -->
+    <div class="px-6 py-2.5 border-b border-brand-100 bg-white flex items-center gap-2 overflow-x-auto text-xs">
+      <span class="text-brand-400 font-semibold uppercase tracking-wider text-[10px]">Filter:</span>
+      <button type="button" onclick="filterModalApplicants('all')" id="modal-tab-all" class="modal-filter-tab px-3 py-1 rounded-lg bg-brand-50 text-brand-800 font-bold">All (<span id="modal-cnt-all">0</span>)</button>
+      <button type="button" onclick="filterModalApplicants('shortlisted')" id="modal-tab-shortlisted" class="modal-filter-tab px-3 py-1 rounded-lg text-brand-600 hover:bg-brand-50 font-medium">Shortlisted ⭐ (<span id="modal-cnt-shortlisted">0</span>)</button>
+      <button type="button" onclick="filterModalApplicants('hired')" id="modal-tab-hired" class="modal-filter-tab px-3 py-1 rounded-lg text-brand-600 hover:bg-brand-50 font-medium">Selected / Hired 🎯 (<span id="modal-cnt-hired">0</span>)</button>
+      <button type="button" onclick="filterModalApplicants('submitted')" id="modal-tab-submitted" class="modal-filter-tab px-3 py-1 rounded-lg text-brand-600 hover:bg-brand-50 font-medium">Under Review (<span id="modal-cnt-submitted">0</span>)</button>
+    </div>
+
+    <!-- Candidate List -->
+    <div class="overflow-y-auto flex-1 p-6 space-y-3.5" id="applicants-list">
       <p class="text-brand-600 text-sm">Loading applicants...</p>
     </div>
   </div>
@@ -223,6 +237,10 @@
 <script>
 let globalPostings = [];
 let pendingDeleteJobId = null;
+let currentModalJobId = null;
+let currentModalJobTitle = "";
+let currentModalApplicants = [];
+let currentApplicantFilter = "all";
 
 function showToast(message, isError = false) {
   const toast = document.getElementById("toast");
@@ -253,6 +271,7 @@ function addSkillSuggestion(skill) {
   }
 }
 
+// Open Post Job Dialog
 function openCreateModal() {
   document.getElementById("job-form").reset();
   document.getElementById("job-form-id").value = "";
@@ -260,10 +279,12 @@ function openCreateModal() {
   document.getElementById("submit-job-text").textContent = "Publish Posting";
   document.getElementById("form-error").classList.add("hidden");
   document.getElementById("job-status-input").value = "open";
+  document.getElementById("job-location-input").value = "Remote";
   document.getElementById("job-modal").classList.remove("hidden");
-  document.getElementById("job-title-input").focus();
+  setTimeout(() => document.getElementById("job-title-input").focus(), 50);
 }
 
+// Open Edit Job Dialog
 function openEditModal(id) {
   const posting = globalPostings.find(p => p.id === id);
   if (!posting) return;
@@ -279,6 +300,7 @@ function openEditModal(id) {
   document.getElementById("submit-job-text").textContent = "Save Changes";
   document.getElementById("form-error").classList.add("hidden");
   document.getElementById("job-modal").classList.remove("hidden");
+  setTimeout(() => document.getElementById("job-title-input").focus(), 50);
 }
 
 function closeJobModal() {
@@ -291,9 +313,8 @@ document.getElementById("close-job-modal").addEventListener("click", closeJobMod
 document.getElementById("cancel-job-modal").addEventListener("click", closeJobModal);
 document.getElementById("job-modal-backdrop").addEventListener("click", closeJobModal);
 
-// Submit Job Form Handler
+// Submit Job Form
 document.getElementById("submit-job-btn").addEventListener("click", async () => {
-  const form = document.getElementById("job-form");
   const errorEl = document.getElementById("form-error");
   const spinner = document.getElementById("submit-job-spinner");
   const btnText = document.getElementById("submit-job-text");
@@ -453,7 +474,7 @@ function renderPostings(postings) {
           <p class="text-brand-600 text-sm max-w-md mx-auto mb-6">
             Publish your first job, internship, or apprenticeship opportunity to begin receiving verified student applications.
           </p>
-          <button onclick="openCreateModal()" class="inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2.5 rounded-xl hover:bg-brand-800 transition text-sm font-semibold shadow-sm">
+          <button id="create-first-job" type="button" onclick="openCreateModal()" class="inline-flex items-center gap-2 bg-brand-700 text-white px-5 py-2.5 rounded-xl hover:bg-brand-800 transition text-sm font-semibold shadow-sm cursor-pointer">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -520,7 +541,7 @@ function renderPostings(postings) {
       </div>
 
       <div class="pt-3 border-t border-brand-100 flex flex-wrap items-center gap-2.5">
-        <button onclick="viewApplicants('${posting.id}', '${esc(posting.title)}')" class="flex-1 min-w-[150px] bg-brand-700 hover:bg-brand-800 text-white py-2.5 px-4 rounded-xl text-sm font-semibold transition shadow-xs flex items-center justify-center gap-1.5">
+        <button onclick="viewApplicants('${posting.id}', '${esc(posting.title)}')" class="flex-1 min-w-[160px] bg-brand-700 hover:bg-brand-800 text-white py-2.5 px-4 rounded-xl text-sm font-semibold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -530,7 +551,7 @@ function renderPostings(postings) {
           <span>View Applications</span>
         </button>
 
-        <button onclick="openEditModal('${posting.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 py-2.5 px-4 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5">
+        <button onclick="openEditModal('${posting.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 py-2.5 px-4 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 cursor-pointer">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -538,7 +559,7 @@ function renderPostings(postings) {
           <span>Edit</span>
         </button>
 
-        <button onclick="openDeleteModal('${posting.id}')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 px-4 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5">
+        <button onclick="openDeleteModal('${posting.id}')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 px-4 rounded-xl text-sm font-medium transition flex items-center justify-center gap-1.5 cursor-pointer">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -577,15 +598,155 @@ async function loadPostings() {
   }
 }
 
-// Applicants Modal Logic
+// Filter Applicants inside Modal
+function filterModalApplicants(filter) {
+  currentApplicantFilter = filter;
+  document.querySelectorAll(".modal-filter-tab").forEach(tab => {
+    tab.className = "modal-filter-tab px-3 py-1 rounded-lg text-brand-600 hover:bg-brand-50 font-medium cursor-pointer";
+  });
+  const activeTab = document.getElementById(`modal-tab-${filter}`);
+  if (activeTab) {
+    activeTab.className = "modal-filter-tab px-3 py-1 rounded-lg bg-brand-50 text-brand-800 font-bold cursor-pointer";
+  }
+
+  const filtered = (filter === "all")
+    ? currentModalApplicants
+    : currentModalApplicants.filter(a => (a.status || "submitted") === filter);
+
+  renderModalApplicantsList(filtered);
+}
+
+function updateModalCounts() {
+  const total = currentModalApplicants.length;
+  const shortlisted = currentModalApplicants.filter(a => a.status === "shortlisted").length;
+  const hired = currentModalApplicants.filter(a => a.status === "hired").length;
+  const submitted = currentModalApplicants.filter(a => (a.status || "submitted") === "submitted").length;
+
+  document.getElementById("applicants-count-badge").textContent = total;
+  document.getElementById("modal-cnt-all").textContent = total;
+  document.getElementById("modal-cnt-shortlisted").textContent = shortlisted;
+  document.getElementById("modal-cnt-hired").textContent = hired;
+  document.getElementById("modal-cnt-submitted").textContent = submitted;
+}
+
+// Render Applicants List inside Modal
+function renderModalApplicantsList(applicants) {
+  const listEl = document.getElementById("applicants-list");
+  if (!applicants || applicants.length === 0) {
+    listEl.innerHTML = `
+      <div class="text-center py-10 border border-brand-100 rounded-2xl bg-offwhite/50">
+        <div class="text-3xl mb-2">👥</div>
+        <h4 class="font-bold text-ink text-base">No candidates found</h4>
+        <p class="text-xs text-brand-500 max-w-sm mx-auto mt-1">
+          ${currentApplicantFilter === 'all' ? 'Candidates who apply to this role will appear here automatically.' : 'No candidates match the selected status filter.'}
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const statusConfig = {
+    "submitted": { label: "Under Review", bg: "bg-sky-50", text: "text-sky-800", border: "border-sky-200" },
+    "shortlisted": { label: "Shortlisted ⭐", bg: "bg-emerald-50", text: "text-emerald-800", border: "border-emerald-200" },
+    "hired": { label: "Selected / Hired 🎯", bg: "bg-green-50", text: "text-green-800", border: "border-green-200" },
+    "rejected": { label: "Not Selected", bg: "bg-red-50", text: "text-red-800", border: "border-red-200" }
+  };
+
+  listEl.innerHTML = applicants.map(a => {
+    const name = a.users?.name || "Verified Candidate";
+    const email = a.users?.email || "";
+    const college = a.student_profiles?.college_name || "";
+    const score = a.interviews?.overall_score_pct;
+    const status = a.status || "submitted";
+    const cfg = statusConfig[status] || statusConfig.submitted;
+
+    const scoreColor = (score >= 75)
+      ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+      : (score >= 60)
+      ? "text-sky-700 bg-sky-50 border-sky-200"
+      : "text-amber-700 bg-amber-50 border-amber-200";
+
+    return `
+      <div id="applicant-card-${a.id}" class="border border-brand-100 rounded-2xl p-5 bg-white shadow-xs hover:border-brand-300 transition space-y-3.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="flex items-center gap-3">
+            <div class="h-11 w-11 rounded-xl bg-ink text-white flex items-center justify-center font-bold text-base shrink-0">
+              ${esc(name[0] || "S").toUpperCase()}
+            </div>
+            <div>
+              <p class="font-bold text-ink text-base leading-snug">${esc(name)}</p>
+              <p class="text-xs text-brand-500">${esc(email)}${college ? ` • 🎓 ${esc(college)}` : ""}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <span id="badge-status-${a.id}" class="px-3 py-1 rounded-full text-xs font-bold border ${cfg.bg} ${cfg.text} ${cfg.border} transition-all">
+              ${cfg.label}
+            </span>
+            <div class="px-3 py-1 rounded-xl border text-center ${scoreColor}">
+              <span class="text-sm font-bold">${score != null ? score + "%" : "—"}</span>
+              <span class="text-[9px] block uppercase font-semibold leading-none opacity-80">Verified</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-brand-400 mb-1">Validated Candidate Strengths</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${(a.student_profiles?.strengths || a.student_profiles?.validated_skills || []).slice(0, 6).map(s => `
+              <span class="text-xs bg-brand-50 text-brand-800 border border-brand-100 px-2.5 py-0.5 rounded-lg font-medium">
+                ${esc(s)}
+              </span>
+            `).join("") || '<span class="text-xs text-brand-400">Skill verification pending</span>'}
+          </div>
+        </div>
+
+        <!-- Candidate Selection Action Buttons -->
+        <div class="pt-3 border-t border-brand-100 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs text-brand-500 font-semibold mr-1">Select Student:</span>
+            
+            <button type="button" onclick="selectCandidate('${a.id}', 'shortlisted')" class="text-xs px-3 py-1.5 rounded-lg border font-semibold transition cursor-pointer ${status === 'shortlisted' ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs' : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'}">
+              ⭐ Shortlist
+            </button>
+
+            <button type="button" onclick="selectCandidate('${a.id}', 'hired')" class="text-xs px-3 py-1.5 rounded-lg border font-semibold transition cursor-pointer ${status === 'hired' ? 'bg-green-700 text-white border-green-700 shadow-xs' : 'bg-green-50 text-green-800 border-green-200 hover:bg-green-100'}">
+              🎯 Select / Hire
+            </button>
+
+            <button type="button" onclick="selectCandidate('${a.id}', 'rejected')" class="text-xs px-3 py-1.5 rounded-lg border font-semibold transition cursor-pointer ${status === 'rejected' ? 'bg-red-700 text-white border-red-700 shadow-xs' : 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100'}">
+              ✕ Reject
+            </button>
+
+            <button type="button" onclick="selectCandidate('${a.id}', 'submitted')" class="text-xs px-2.5 py-1.5 rounded-lg border border-brand-200 text-brand-600 hover:bg-brand-50 font-medium transition cursor-pointer" title="Reset to review">
+              ↺ Review
+            </button>
+          </div>
+
+          ${email ? `
+            <a href="mailto:${esc(email)}?subject=Regarding your application for ${esc(currentModalJobTitle)}" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition">
+              <span>✉️ Contact</span>
+            </a>
+          ` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Open View Applicants Dialog
 async function viewApplicants(jobId, jobTitle) {
+  currentModalJobId = jobId;
+  currentModalJobTitle = jobTitle;
+  currentApplicantFilter = "all";
+
   document.getElementById("applicants-modal").classList.remove("hidden");
   document.getElementById("applicants-modal-title").textContent = `Applicants · ${jobTitle || "Role"}`;
+  
   const listEl = document.getElementById("applicants-list");
   listEl.innerHTML = `
-    <div class="text-center py-8">
-      <div class="inline-block animate-spin w-7 h-7 border-3 border-brand-600 border-t-transparent rounded-full mb-2"></div>
-      <p class="text-brand-600 text-sm">Fetching verified applicants...</p>
+    <div class="text-center py-10">
+      <div class="inline-block animate-spin w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full mb-3"></div>
+      <p class="text-brand-600 text-sm font-medium">Fetching verified student applicants...</p>
     </div>
   `;
 
@@ -593,109 +754,35 @@ async function viewApplicants(jobId, jobTitle) {
     const res = await fetch(`/api/industry/jobs/${jobId}/applicants`, {
       headers: { "Authorization": `Bearer ${accessToken}` }
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error("Could not fetch applicants");
+    
     let applicants = await res.json();
-
-    // Sort descending by interview score
     applicants.sort((a, b) => {
       const scoreA = a.interviews?.overall_score_pct || 0;
       const scoreB = b.interviews?.overall_score_pct || 0;
       return scoreB - scoreA;
     });
 
-    if (applicants.length === 0) {
-      listEl.innerHTML = `
-        <div class="text-center py-10 border border-brand-100 rounded-2xl bg-offwhite/50">
-          <div class="text-3xl mb-2">👥</div>
-          <h4 class="font-bold text-ink text-base">No applicants yet</h4>
-          <p class="text-xs text-brand-500 max-w-sm mx-auto mt-1">
-            Candidates who match this role and complete their AI interview validation will appear here automatically.
-          </p>
-        </div>
-      `;
-      return;
-    }
-
-    listEl.innerHTML = applicants.map(a => {
-      const name = a.users?.name || "Verified Student";
-      const email = a.users?.email || "";
-      const college = a.student_profiles?.college_name || "";
-      const score = a.interviews?.overall_score_pct;
-      const passed = a.interviews?.passed;
-      const status = a.status || "submitted";
-
-      const statusColors = {
-        "submitted": "bg-sky-50 text-sky-800 border-sky-200",
-        "shortlisted": "bg-emerald-50 text-emerald-800 border-emerald-200",
-        "hired": "bg-green-50 text-green-800 border-green-200",
-        "rejected": "bg-red-50 text-red-800 border-red-200"
-      };
-
-      const scoreColor = (score >= 75)
-        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-        : (score >= 60)
-        ? "text-sky-700 bg-sky-50 border-sky-200"
-        : "text-amber-700 bg-amber-50 border-amber-200";
-
-      return `
-        <div class="border border-brand-100 rounded-2xl p-4 bg-white shadow-xs hover:border-brand-200 transition space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="flex items-center gap-3">
-              <div class="h-10 w-10 rounded-xl bg-ink text-white flex items-center justify-center font-bold text-sm shrink-0">
-                ${esc(name[0] || "S").toUpperCase()}
-              </div>
-              <div>
-                <p class="font-bold text-ink text-sm sm:text-base leading-snug">${esc(name)}</p>
-                <p class="text-xs text-brand-500">${esc(email)}${college ? ` • ${esc(college)}` : ""}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 self-start sm:self-auto">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors[status] || statusColors.submitted} capitalize">
-                ${esc(status)}
-              </span>
-              <div class="px-3 py-1 rounded-xl border text-center ${scoreColor}">
-                <span class="text-sm font-bold">${score != null ? score + "%" : "—"}</span>
-                <span class="text-[10px] block leading-none opacity-80">AI Score</span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-400 mb-1">Validated Strengths</p>
-            <div class="flex flex-wrap gap-1">
-              ${(a.student_profiles?.strengths || a.student_profiles?.validated_skills || []).slice(0, 5).map(s => `
-                <span class="text-[11px] bg-brand-50 text-brand-800 px-2 py-0.5 rounded-md font-medium">
-                  ${esc(s)}
-                </span>
-              `).join("") || '<span class="text-xs text-brand-400">Skill verification pending</span>'}
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-brand-100 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs text-brand-500 font-medium">Change Status:</span>
-              <select onchange="updateApplicantStatus('${a.id}', this.value, '${jobId}', '${esc(jobTitle)}')" class="text-xs border border-brand-200 rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-brand-400 focus:outline-none">
-                <option value="submitted" ${status === 'submitted' ? 'selected' : ''}>Submitted</option>
-                <option value="shortlisted" ${status === 'shortlisted' ? 'selected' : ''}>Shortlisted</option>
-                <option value="hired" ${status === 'hired' ? 'selected' : ''}>Hired</option>
-                <option value="rejected" ${status === 'rejected' ? 'selected' : ''}>Rejected</option>
-              </select>
-            </div>
-            ${email ? `
-              <a href="mailto:${esc(email)}?subject=Regarding your application for ${esc(jobTitle)}" class="text-xs text-brand-700 hover:text-ink font-semibold flex items-center gap-1">
-                Contact Candidate &rarr;
-              </a>
-            ` : ""}
-          </div>
-        </div>
-      `;
-    }).join("");
+    currentModalApplicants = applicants || [];
+    updateModalCounts();
+    filterModalApplicants("all");
   } catch (err) {
     listEl.innerHTML = '<p class="text-red-500 text-sm py-4 text-center">Failed to load applicants. Please try again.</p>';
   }
 }
 
-async function updateApplicantStatus(appId, newStatus, jobId, jobTitle) {
+// Select Candidate / Update Status in Real Time
+async function selectCandidate(appId, newStatus) {
+  // Optimistically update local array
+  const targetApp = currentModalApplicants.find(a => a.id === appId);
+  if (targetApp) {
+    targetApp.status = newStatus;
+    updateModalCounts();
+    filterModalApplicants(currentApplicantFilter);
+  }
+
+  showToast(`Candidate status updated to "${newStatus}".`);
+
   try {
     const res = await fetch(`/api/industry/applications/${appId}/status`, {
       method: "PATCH",
@@ -706,19 +793,58 @@ async function updateApplicantStatus(appId, newStatus, jobId, jobTitle) {
       body: JSON.stringify({ status: newStatus })
     });
 
-    if (!res.ok) throw new Error();
-    showToast(`Application marked as ${newStatus}.`);
-    viewApplicants(jobId, jobTitle);
+    if (!res.ok) throw new Error("Failed to update status on server");
   } catch (err) {
-    showToast("Failed to update status.", true);
+    showToast("Could not synchronize status change with server.", true);
   }
 }
 
 document.getElementById("close-applicants-modal").addEventListener("click", () => {
   document.getElementById("applicants-modal").classList.add("hidden");
+  currentModalJobId = null;
 });
 document.getElementById("applicants-modal-backdrop").addEventListener("click", () => {
   document.getElementById("applicants-modal").classList.add("hidden");
+  currentModalJobId = null;
+});
+
+// Real-time Socket.IO Listeners
+if (window.socket) {
+  window.socket.on("application_status_changed", (data) => {
+    if (!data || !data.id) return;
+    
+    // If applicant is currently shown in modal, update realtime
+    const app = currentModalApplicants.find(a => a.id === data.id);
+    if (app) {
+      app.status = data.status;
+      updateModalCounts();
+      filterModalApplicants(currentApplicantFilter);
+    }
+  });
+
+  window.socket.on("new_applicant", (data) => {
+    if (!data) return;
+    // If currently viewing applicants for this job, refresh list
+    if (currentModalJobId && data.job_posting_id === currentModalJobId) {
+      showToast("New candidate application received in real-time! ✨");
+      viewApplicants(currentModalJobId, currentModalJobTitle);
+    } else {
+      loadPostings();
+    }
+  });
+
+  window.socket.on("new_job_posting", () => {
+    loadPostings();
+  });
+}
+
+// Keyboard shortcut: Escape to close modals
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeJobModal();
+    closeDeleteModal();
+    document.getElementById("applicants-modal").classList.add("hidden");
+  }
 });
 
 loadPostings();

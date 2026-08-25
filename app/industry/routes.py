@@ -508,12 +508,18 @@ def update_application_status(application_id):
     result = supabase.table("applications").update({"status": new_status}).eq("id", application_id).execute()
     if result.data:
         app_row = result.data[0]
+        # Emit to student's room
         socketio.emit("application_status_changed", app_row, to=f"user_{app_row['student_id']}")
+        # Emit to industry room and broadcast for realtime sync
+        socketio.emit("application_status_changed", app_row, to="industrys_room")
+        socketio.emit("application_status_changed", app_row)
+
         supabase.table("activity_log").insert({
             "user_id": app_row["student_id"], "type": "application_status_changed",
-            "title": "Application status updated", "subtitle": f"Now {new_status}",
+            "title": "Application status updated", "subtitle": f"Status updated to {new_status}",
         }).execute()
-    return jsonify(result.data[0] if result.data else {})
+        return jsonify(app_row)
+    return jsonify({"error": "application not found"}), 404
 
 
 @industry_bp.post("/ai/ask")

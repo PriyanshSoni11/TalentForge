@@ -348,10 +348,10 @@ async function loadCourses() {
           ` : `
             <div class="flex-1 text-xs text-brand-400 py-2.5">Internal Training</div>
           `}
-          <button onclick="openEditCourseModal('${course.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 py-2.5 px-4 rounded-xl text-sm font-medium transition">
+          <button onclick="openEditCourseModal('${course.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 py-2.5 px-4 rounded-xl text-sm font-medium transition cursor-pointer">
             Edit
           </button>
-          <button onclick="openDeleteCourseModal('${course.id}')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 px-4 rounded-xl text-sm font-medium transition">
+          <button onclick="openDeleteCourseModal('${course.id}')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2.5 px-4 rounded-xl text-sm font-medium transition cursor-pointer">
             Delete
           </button>
         </div>
@@ -367,6 +367,13 @@ async function loadCourses() {
     `;
   }
 }
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeCourseModal();
+    closeDeleteCourseModal();
+  }
+});
 
 loadCourses();
 </script>
