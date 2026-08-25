@@ -24,7 +24,7 @@ An AI-powered career enablement platform connecting students, colleges, and indu
 
 ```bash
 # Clone and enter directory
-cd portal
+cd TalentForge
 
 # Create and activate virtual environment
 python -m venv venv

@@ -111,3 +111,5 @@ temp/
 # Storage & Local uploads (if saved locally)
 uploads/
 recordings/
+
+.vercel
