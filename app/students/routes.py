@@ -43,14 +43,15 @@ def upload_resume():
         return jsonify({"error": str(e)}), 400
 
     supabase = get_supabase()
-    existing_profile = supabase.table("student_profiles").select("resume_url, resume_path").eq(
+    existing_profile = supabase.table("student_profiles").select("resume_url").eq(
         "user_id", request.user["id"]
     ).execute().data
 
-    old_resume_path = existing_profile[0].get("resume_path") if existing_profile else None
-    if not old_resume_path and existing_profile and existing_profile[0].get("resume_url"):
+    old_resume_path = None
+    if existing_profile and existing_profile[0].get("resume_url"):
         marker = "/storage/v1/object/public/resumes/"
-        old_resume_path = existing_profile[0]["resume_url"].split(marker, 1)[-1]
+        if marker in existing_profile[0]["resume_url"]:
+            old_resume_path = existing_profile[0]["resume_url"].split(marker, 1)[-1]
     if old_resume_path:
         try:
             supabase.storage.from_("resumes").remove([old_resume_path])
@@ -81,9 +82,9 @@ def upload_resume():
     supabase.table("student_profiles").upsert({
         "user_id": request.user["id"],
         "resume_url": resume_url,
-        "resume_path": storage_path,
         "parsed_resume": parsed,
     }, on_conflict="user_id").execute()
+
 
     # A new resume describes a new skill profile, so generate a fresh assessment.
     try:

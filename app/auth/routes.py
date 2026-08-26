@@ -87,11 +87,12 @@ def register():
                 resume_url = f"/api/students/resume/download"
 
         supabase.table("student_profiles").upsert({
-            "user_id": user["id"], "college_name": college_name,
+            "user_id": user["id"],
+            "college_name": college_name,
             "resume_url": resume_url,
-            "resume_path": storage_path,
             "parsed_resume": parsed_resume,
         }, on_conflict="user_id").execute()
+
 
     elif role == "industry":
         headline = f"Mentor · {college_name}" if college_name else "Mentor & Industry Professional"
