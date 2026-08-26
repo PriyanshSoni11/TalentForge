@@ -2,7 +2,7 @@ import json
 import re
 
 from langchain_core.prompts import ChatPromptTemplate
-from app.ai import get_llm
+from app.ai import get_llm, extract_llm_text
 from app.ai.rag import retrieve_context
 
 _GEN_PROMPT = ChatPromptTemplate.from_messages([
@@ -33,22 +33,27 @@ _SUMMARY_PROMPT = ChatPromptTemplate.from_messages([
 
 
 def _strip_code_fences(text):
-    return re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
+    clean = re.sub(r"^```(json)?", "", text.strip(), flags=re.IGNORECASE).strip()
+    clean = re.sub(r"```$", "", clean).strip()
+    return clean
 
 
 def generate_assessment(skills, context="", owner_id=None, supabase=None):
     if owner_id and supabase and context:
-        context = retrieve_context(
-            owner_id,
-            "Generate technical assessment questions from this candidate resume",
-            context,
-            supabase,
-        )
+        try:
+            context = retrieve_context(
+                owner_id,
+                "Generate technical assessment questions from this candidate resume",
+                context,
+                supabase,
+            )
+        except Exception:
+            pass
     try:
         llm = get_llm()
         chain = _GEN_PROMPT | llm
         response = chain.invoke({"skills": ", ".join(skills), "context": context or "No additional context."})
-        raw = _strip_code_fences(response.content)
+        raw = _strip_code_fences(extract_llm_text(response.content))
     except Exception:
         return _fallback_questions(skills)
 
@@ -59,6 +64,7 @@ def generate_assessment(skills, context="", owner_id=None, supabase=None):
         questions = []
 
     return questions[:20] if len(questions) >= 20 else _fallback_questions(skills)
+
 
 
 def _fallback_questions(skills):
@@ -109,9 +115,10 @@ def generate_strengths_weaknesses(breakdown):
         llm = get_llm()
         chain = _SUMMARY_PROMPT | llm
         response = chain.invoke({"breakdown": formatted})
-        raw = _strip_code_fences(response.content)
+        raw = _strip_code_fences(extract_llm_text(response.content))
     except Exception:
         return _fallback_summary(breakdown)
+
 
     try:
         result = json.loads(raw)

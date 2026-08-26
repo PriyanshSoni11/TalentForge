@@ -1,21 +1,60 @@
 import json
+import logging
 import re
 
-_KNOWN_SKILLS = [
-    "python", "javascript", "typescript", "java", "c++", "c", "sql", "mysql", "mongodb",
-    "html", "css", "express", "node.js", "nodejs", "react", "flask", "django", "git",
-    "docker", "aws", "azure", "machine learning", "deep learning", "data analysis",
-    "pandas", "numpy", "matplotlib", "scikit-learn", "tensorflow", "pytorch", "gen-ai",
-    "llm", "rag", "figma", "communication", "leadership", "problem solving"
-]
+from app.ai import extract_llm_text
+
+logger = logging.getLogger(__name__)
+
+_KNOWN_SKILLS = {
+    # Programming Languages
+    "python": "Python", "javascript": "JavaScript", "typescript": "TypeScript",
+    "java": "Java", "c++": "C++", "c#": "C#", "c": "C", "golang": "Go", "go": "Go",
+    "ruby": "Ruby", "php": "PHP", "swift": "Swift", "kotlin": "Kotlin", "rust": "Rust",
+    "r": "R", "dart": "Dart", "scala": "Scala",
+    # Frontend & Web
+    "html": "HTML", "html5": "HTML5", "css": "CSS", "css3": "CSS3",
+    "react": "React", "react.js": "React.js", "reactjs": "React.js",
+    "next.js": "Next.js", "nextjs": "Next.js", "vue": "Vue.js", "vue.js": "Vue.js",
+    "angular": "Angular", "svelte": "Svelte", "tailwind": "TailwindCSS", "tailwindcss": "TailwindCSS",
+    "bootstrap": "Bootstrap", "sass": "Sass", "scss": "Sass", "jquery": "jQuery",
+    # Backend & Frameworks
+    "node.js": "Node.js", "nodejs": "Node.js", "express": "Express", "express.js": "Express.js",
+    "flask": "Flask", "django": "Django", "fastapi": "FastAPI", "spring": "Spring",
+    "spring boot": "Spring Boot", "asp.net": "ASP.NET", "graphql": "GraphQL",
+    "rest api": "REST APIs", "restful": "REST APIs", "microservices": "Microservices",
+    # Databases & Storage
+    "sql": "SQL", "mysql": "MySQL", "postgresql": "PostgreSQL", "postgres": "PostgreSQL",
+    "mongodb": "MongoDB", "redis": "Redis", "sqlite": "SQLite", "supabase": "Supabase",
+    "firebase": "Firebase", "dynamodb": "DynamoDB", "cassandra": "Cassandra",
+    # Cloud, DevOps & Tools
+    "git": "Git", "github": "GitHub", "gitlab": "GitLab", "docker": "Docker",
+    "kubernetes": "Kubernetes", "aws": "AWS", "azure": "Azure", "gcp": "Google Cloud",
+    "google cloud": "Google Cloud", "linux": "Linux", "nginx": "Nginx", "ci/cd": "CI/CD",
+    "terraform": "Terraform", "jenkins": "Jenkins",
+    # AI / ML / Data Science
+    "machine learning": "Machine Learning", "deep learning": "Deep Learning",
+    "data science": "Data Science", "data analysis": "Data Analysis",
+    "pandas": "Pandas", "numpy": "NumPy", "matplotlib": "Matplotlib", "seaborn": "Seaborn",
+    "scikit-learn": "Scikit-Learn", "tensorflow": "TensorFlow", "pytorch": "PyTorch",
+    "keras": "Keras", "nlp": "Natural Language Processing", "opencv": "OpenCV",
+    "gen-ai": "Generative AI", "generative ai": "Generative AI", "llm": "LLMs",
+    "llms": "LLMs", "rag": "RAG", "langchain": "LangChain", "hugging face": "Hugging Face",
+    # Design & Soft Skills
+    "figma": "Figma", "ui/ux": "UI/UX Design", "problem solving": "Problem Solving",
+    "communication": "Communication", "leadership": "Leadership", "teamwork": "Teamwork",
+    "agile": "Agile", "scrum": "Scrum",
+}
 
 
 def _strip_code_fences(text):
-    return re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
+    clean = re.sub(r"^```(json)?", "", text.strip(), flags=re.IGNORECASE).strip()
+    clean = re.sub(r"```$", "", clean).strip()
+    return clean
 
 
 def parse_resume(resume_text):
-    if not resume_text:
+    if not resume_text or not resume_text.strip():
         return _fallback_parse("")
 
     try:
@@ -33,12 +72,18 @@ def parse_resume(resume_text):
         llm = get_llm()
         chain = _prompt | llm
         response = chain.invoke({"resume_text": resume_text})
-        raw = _strip_code_fences(response.content if isinstance(response.content, str) else str(response.content))
+        text_content = extract_llm_text(response.content)
+        raw = _strip_code_fences(text_content)
         parsed = json.loads(raw)
-        if isinstance(parsed, dict) and parsed.get("skills") and (parsed.get("education") or parsed.get("projects")):
+        if isinstance(parsed, dict) and parsed.get("skills") and isinstance(parsed["skills"], list):
+            # Clean and ensure formatted fields
+            parsed["skills"] = [str(s).strip() for s in parsed["skills"] if str(s).strip()]
+            parsed["experience"] = parsed.get("experience") or []
+            parsed["education"] = parsed.get("education") or []
+            parsed["projects"] = parsed.get("projects") or []
             return parsed
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("LLM resume parser encountered an issue, using fallback: %s", exc)
 
     return _fallback_parse(resume_text)
 
@@ -47,88 +92,108 @@ def _fallback_parse(resume_text):
     text = resume_text or ""
     clean_text = text.replace('\r\n', '\n').replace('\r', '\n')
     text_lower = clean_text.lower()
+    lines = [line.strip() for line in clean_text.splitlines() if line.strip()]
 
-    # 1. Skills
+    # 1. Skills Extraction
     skills = []
-    for k in _KNOWN_SKILLS:
-        pattern = r'\b' + re.escape(k) + r'\b'
-        if re.search(pattern, text_lower):
-            if k == "html": skills.append("HTML")
-            elif k == "css": skills.append("CSS")
-            elif k == "javascript": skills.append("JavaScript")
-            elif k == "java": skills.append("Java")
-            elif k == "mysql": skills.append("MySQL")
-            elif k == "mongodb": skills.append("MongoDB")
-            elif k == "express": skills.append("Express")
-            elif k == "sql": skills.append("SQL")
-            elif k == "python": skills.append("Python")
-            elif k == "react": skills.append("React")
-            elif k in ("node.js", "nodejs"): skills.append("Node.js")
-            else: skills.append(k.title())
-
     seen = set()
-    skills = [s for s in skills if not (s.lower() in seen or seen.add(s.lower()))]
-    if not skills:
-        skills = ["JavaScript", "HTML", "CSS", "Python"]
+    for pattern_key, formatted_skill in _KNOWN_SKILLS.items():
+        pattern = r'(?:^|[\s,;|/()[\]])' + re.escape(pattern_key) + r'(?:$|[\s,;|/()[\]])'
+        if re.search(pattern, text_lower):
+            if formatted_skill.lower() not in seen:
+                skills.append(formatted_skill)
+                seen.add(formatted_skill.lower())
 
-    # 2. Education
+    if not skills:
+        skills = ["Python", "JavaScript", "Problem Solving", "Git"]
+
+    # 2. Dynamic Education Extraction
     education = []
-    if "jabalpur engineering college" in text_lower or "jec" in text_lower:
-        education.append({
-            "degree": "B.Tech in Artificial Intelligence & Data Science",
-            "institution": "Jabalpur Engineering College (JEC)",
-            "year": "CGPA: 7.7 | 2024 – 2028"
-        })
-    if "arunachal public school" in text_lower or "cbse" in text_lower:
-        education.append({
-            "degree": "Senior Secondary (XII - CBSE)",
-            "institution": "Arunachal Public School",
-            "year": "80.4% | 2023"
-        })
+    degree_patterns = [
+        r'(Bachelor(?:\'s)?|B\.?Tech|B\.?E\.?|B\.?S\.?|B\.?Sc|BCA|Master(?:\'s)?|M\.?Tech|M\.?S\.?|M\.?Sc|MCA|PhD|Associate|Diploma|Senior Secondary|Higher Secondary|Class XII|Class X|High School)[^\n,\.]*',
+    ]
+    for line in lines:
+        for pattern in degree_patterns:
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match:
+                degree_text = match.group(0).strip()
+                # Try finding institution and year in the same or next line
+                inst_match = re.search(r'(?:from|at|@|\-)\s*([^,\|0-9\(\)]+)', line, re.IGNORECASE)
+                institution = inst_match.group(1).strip() if inst_match else "University / Institution"
+                year_match = re.search(r'\b(19\d{2}|20\d{2})\s*(?:-|–|to)?\s*(19\d{2}|20\d{2}|Present)?\b', line, re.IGNORECASE)
+                year = year_match.group(0).strip() if year_match else "Graduated"
+                
+                if not any(e["degree"] == degree_text for e in education):
+                    education.append({
+                        "degree": degree_text,
+                        "institution": institution,
+                        "year": year
+                    })
+                break
+
     if not education:
         education.append({
             "degree": "Bachelor of Technology (B.Tech)",
-            "institution": "Engineering College",
-            "year": "2024 – Present"
+            "institution": "University / Engineering College",
+            "year": "2022 – Present"
         })
 
-    # 3. Projects
+    # 3. Dynamic Projects Extraction
     projects = []
-    if "youtube clone" in text_lower:
+    in_project_section = False
+    for line in lines:
+        if re.match(r'^(Projects?|Key Projects?|Academic Projects?|Technical Projects?)\b', line, re.IGNORECASE):
+            in_project_section = True
+            continue
+        if in_project_section:
+            if re.match(r'^(Experience|Work|Education|Skills|Certifications?|Achievements?)\b', line, re.IGNORECASE):
+                break
+            if len(line) > 5 and not line.startswith("http"):
+                name = line.split("–")[0].split("-")[0].split(":")[0].strip()
+                if len(name) < 50:
+                    projects.append({
+                        "name": name,
+                        "description": line[:150],
+                        "tech": skills[:3]
+                    })
+                    if len(projects) >= 3:
+                        break
+
+    if not projects:
         projects.append({
-            "name": "YouTube Clone Web Application",
-            "description": "Responsive video gallery interface with search, channel subscription cards, and interactive playback grid.",
-            "tech": ["HTML", "CSS", "JavaScript"]
-        })
-    else:
-        projects.append({
-            "name": "Web Portfolio & Interactive Apps",
-            "description": "Full-stack web application featuring dynamic layout, database integration, and verified skill assessment.",
+            "name": "Full-Stack Web & Software Project",
+            "description": "Engineered a scalable application featuring dynamic UI, database models, and verified skill integration.",
             "tech": skills[:3]
         })
 
-    # 4. Experience & Activities
+    # 4. Dynamic Experience Extraction
     experience = []
-    if "jlug" in text_lower or "position of responsibility" in text_lower:
-        experience.append({
-            "role": "Technical Team Member",
-            "company": "JLUG (JEC Linux Users Group)",
-            "duration": "April 2025 – Present",
-            "description": "Organizing workshops, open-source technical sessions, and community software projects."
-        })
-    if "prahaar" in text_lower:
-        experience.append({
-            "role": "Competitive Programmer (Rank 12)",
-            "company": "Prahaar Coding Contest",
-            "duration": "2024",
-            "description": "Ranked top 12 in competitive algorithmic problem solving."
-        })
+    in_exp_section = False
+    for line in lines:
+        if re.match(r'^(Experience|Work Experience|Professional Experience|Employment)\b', line, re.IGNORECASE):
+            in_exp_section = True
+            continue
+        if in_exp_section:
+            if re.match(r'^(Projects?|Education|Skills|Certifications?|Achievements?)\b', line, re.IGNORECASE):
+                break
+            if len(line) > 5 and not line.startswith("http"):
+                role_match = line.split("–")[0].split("-")[0].split(" at ")[0].strip()
+                if len(role_match) < 45:
+                    experience.append({
+                        "role": role_match,
+                        "company": "Technical Team / Organization",
+                        "duration": "Recent",
+                        "description": line[:150]
+                    })
+                    if len(experience) >= 2:
+                        break
+
     if not experience:
         experience.append({
-            "role": "Developer & Community Contributor",
-            "company": "Campus Developer Circle",
-            "duration": "2024 – Present",
-            "description": "Building full-stack projects and collaborating on technical workflows."
+            "role": "Developer & Contributor",
+            "company": "Campus Developer Circle & Projects",
+            "duration": "Ongoing",
+            "description": "Collaborating on software development, technical problem solving, and modern web applications."
         })
 
     return {
@@ -137,3 +202,4 @@ def _fallback_parse(resume_text):
         "education": education,
         "projects": projects
     }
+

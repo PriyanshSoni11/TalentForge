@@ -4,7 +4,7 @@ import re
 import google.generativeai as genai
 from flask import current_app
 from langchain_core.prompts import ChatPromptTemplate
-from app.ai import get_llm
+from app.ai import get_llm, extract_llm_text
 from app.extensions import get_supabase
 from app.ai.rag import retrieve_context
 
@@ -13,13 +13,15 @@ _QUESTION_PROMPT = ChatPromptTemplate.from_messages([
      "You are an expert interviewer. Given a job description and required skills, generate exactly 10 short, "
      "clear, beginner-friendly (EASY difficulty level) open-ended interview questions. "
      "Ensure questions focus on fundamentals, practical basics, problem solving, and enthusiasm for learning. "
-     "Output ONLY valid JSON, no markdown fences, formatted as: {\"questions\": [\"...\", \"...\", ...]} with exactly 10 strings."),
+     'Output ONLY valid JSON, no markdown fences, formatted as: {{"questions": ["...", "..."]}} with exactly 10 strings.'),
     ("human", "Job description context:\n{description}\n\nRequired skills:\n{skills}\n\nDifficulty level: Easy\nTarget question count: 10"),
 ])
 
 
 def _strip_code_fences(text):
-    return re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
+    clean = re.sub(r"^```(json)?", "", text.strip(), flags=re.IGNORECASE).strip()
+    clean = re.sub(r"```$", "", clean).strip()
+    return clean
 
 
 def _fallback_interview_questions(required_skills):
@@ -47,12 +49,15 @@ def _fallback_interview_questions(required_skills):
 def generate_interview_questions(job_description, required_skills, user_id=None):
     try:
         if user_id:
-            context = retrieve_context(
-                user_id,
-                "Find details relevant to generating interview questions for these skills: " + ", ".join(required_skills),
-                job_description,
-                get_supabase()
-            )
+            try:
+                context = retrieve_context(
+                    user_id,
+                    "Find details relevant to generating interview questions for these skills: " + ", ".join(required_skills),
+                    job_description,
+                    get_supabase()
+                )
+            except Exception:
+                context = job_description
         else:
             context = job_description
             
@@ -60,13 +65,7 @@ def generate_interview_questions(job_description, required_skills, user_id=None)
         chain = _QUESTION_PROMPT | llm
         response = chain.invoke({"description": context, "skills": ", ".join(required_skills)})
         
-        # Handle list or string content
-        content_text = ""
-        if isinstance(response.content, list):
-            content_text = " ".join(item.get("text", "") if isinstance(item, dict) else str(item) for item in response.content)
-        else:
-            content_text = str(response.content)
-
+        content_text = extract_llm_text(response.content)
         raw = _strip_code_fences(content_text)
         data = json.loads(raw)
         questions = data.get("questions", [])
@@ -93,7 +92,7 @@ def score_interview_response(question, media_file_uri, required_skill):
     if media_file_uri:
         try:
             genai.configure(api_key=current_app.config["GOOGLE_API_KEY"])
-            model_name = current_app.config.get("GEMINI_MODEL", "gemini-flash-latest")
+            model_name = current_app.config.get("GEMINI_MODEL", "gemini-3.5-flash")
             model = genai.GenerativeModel(model_name)
 
             media_file = genai.get_file(media_file_uri)
@@ -106,7 +105,7 @@ def score_interview_response(question, media_file_uri, required_skill):
                 '{"transcript": str, "score_pct": number (0-100), "feedback": str}'
             )
             response = model.generate_content([prompt, media_file])
-            raw = _strip_code_fences(response.text)
+            raw = _strip_code_fences(extract_llm_text(response.text if hasattr(response, 'text') else str(response)))
             result = json.loads(raw)
             if isinstance(result, dict) and "score_pct" in result:
                 return result
@@ -125,11 +124,7 @@ def score_interview_response(question, media_file_uri, required_skill):
             "Output ONLY valid JSON: {\"transcript\": \"Candidate discussed practical fundamentals and problem-solving steps.\", \"score_pct\": 82, \"feedback\": \"Good foundational clarity and relevant examples.\"}"
         )
         res = llm.invoke(eval_prompt)
-        content_text = ""
-        if isinstance(res.content, list):
-            content_text = " ".join(item.get("text", "") if isinstance(item, dict) else str(item) for item in res.content)
-        else:
-            content_text = str(res.content)
+        content_text = extract_llm_text(res.content)
         raw = _strip_code_fences(content_text)
         result = json.loads(raw)
         if isinstance(result, dict) and "score_pct" in result:
@@ -138,6 +133,7 @@ def score_interview_response(question, media_file_uri, required_skill):
         pass
 
     return _fallback_response_score(question, required_skill)
+
 
 
 def upload_media_for_scoring(local_path):

@@ -1,5 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate
-from app.ai import get_llm
+from app.ai import get_llm, extract_llm_text
 from app.ai.rag import retrieve_context
 from app.extensions import get_supabase
 
@@ -21,14 +21,31 @@ _INDUSTRY_PROMPT = ChatPromptTemplate.from_messages([
 
 
 def answer_student_question(context, question, owner_id):
-    llm = get_llm()
-    chain = _STUDENT_PROMPT | llm
-    response = chain.invoke({"context": retrieve_context(owner_id, question, context, get_supabase()), "question": question})
-    return response.content
+    try:
+        llm = get_llm()
+        chain = _STUDENT_PROMPT | llm
+        rag_context = context
+        try:
+            rag_context = retrieve_context(owner_id, question, context, get_supabase())
+        except Exception:
+            pass
+        response = chain.invoke({"context": rag_context, "question": question})
+        return extract_llm_text(response.content)
+    except Exception:
+        return "I'm currently unable to answer this question. Please explore the dashboard tabs for skills, courses, and roles."
 
 
 def answer_industry_question(context, question, owner_id):
-    llm = get_llm()
-    chain = _INDUSTRY_PROMPT | llm
-    response = chain.invoke({"context": retrieve_context(owner_id, question, context, get_supabase()), "question": question})
-    return response.content
+    try:
+        llm = get_llm()
+        chain = _INDUSTRY_PROMPT | llm
+        rag_context = context
+        try:
+            rag_context = retrieve_context(owner_id, question, context, get_supabase())
+        except Exception:
+            pass
+        response = chain.invoke({"context": rag_context, "question": question})
+        return extract_llm_text(response.content)
+    except Exception:
+        return "I'm currently unable to answer this question. Please view the dashboard for candidate applications and open roles."
+

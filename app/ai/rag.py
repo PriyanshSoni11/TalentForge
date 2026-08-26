@@ -8,11 +8,13 @@ logger = logging.getLogger(__name__)
 
 def _embedding(text, task_type):
     response = genai.embed_content(
-        model=current_app.config["RAG_EMBEDDING_MODEL"],
+        model=current_app.config.get("RAG_EMBEDDING_MODEL", "models/gemini-embedding-001"),
         content=text,
         task_type=task_type,
+        output_dimensionality=768,
     )
     return response["embedding"]
+
 
 def _chunk_text(text, max_size=500, overlap=50):
     lines = [line.strip() for line in text.splitlines()]

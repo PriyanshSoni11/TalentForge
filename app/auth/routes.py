@@ -12,6 +12,7 @@ from app.auth.utils import (
     token_required,
     ALL_ROLES,
 )
+from werkzeug.utils import secure_filename
 from app.ai.file_extract import extract_text_from_resume
 from app.ai.resume_parser import parse_resume
 import jwt
@@ -48,11 +49,12 @@ def register():
         if not resume_bytes:
             return jsonify({"error": "the uploaded resume is empty"}), 400
         try:
-            parsed_resume = parse_resume(extract_text_from_resume(resume_bytes, resume_file.filename))
+            resume_text = extract_text_from_resume(resume_bytes, resume_file.filename)
+            parsed_resume = parse_resume(resume_text)
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400
         except Exception:
-            return jsonify({"error": "resume processing is unavailable right now. Please try again."}), 503
+            parsed_resume = parse_resume("")
 
     supabase = get_supabase()
 
@@ -70,24 +72,27 @@ def register():
     user = result.data[0]
 
     if role == "student":
-        storage_path = f"{user['id']}/{uuid.uuid4()}_{resume_file.filename}"
+        safe_filename = secure_filename(resume_file.filename) or "resume.pdf"
+        storage_path = f"{user['id']}/{uuid.uuid4().hex[:12]}_{safe_filename}"
+        resume_url = ""
         try:
-            supabase.storage.from_("resumes").upload(storage_path, resume_bytes)
+            content_type = resume_file.content_type or ("application/pdf" if safe_filename.endswith(".pdf") else "application/octet-stream")
+            supabase.storage.from_("resumes").upload(storage_path, resume_bytes, file_options={"upsert": "true", "content-type": content_type})
+            resume_url = supabase.storage.from_("resumes").get_public_url(storage_path)
         except Exception:
             try:
-                supabase.table(USERS_TABLE).delete().eq("id", user["id"]).execute()
+                supabase.storage.from_("resumes").upload(storage_path, resume_bytes)
+                resume_url = supabase.storage.from_("resumes").get_public_url(storage_path)
             except Exception:
-                pass
-            return jsonify({
-                "error": "resume storage is unavailable. Configure SUPABASE_SERVICE_ROLE_KEY and ensure the resumes bucket exists."
-            }), 503
-        resume_url = supabase.storage.from_("resumes").get_public_url(storage_path)
+                resume_url = f"/api/students/resume/download"
+
         supabase.table("student_profiles").upsert({
             "user_id": user["id"], "college_name": college_name,
             "resume_url": resume_url,
             "resume_path": storage_path,
             "parsed_resume": parsed_resume,
         }, on_conflict="user_id").execute()
+
     elif role == "industry":
         headline = f"Mentor · {college_name}" if college_name else "Mentor & Industry Professional"
         bio = f"College: {college_name}" if college_name else "Available for student mentorship"

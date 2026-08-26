@@ -288,17 +288,28 @@
     document.getElementById("chat-send").addEventListener("click", sendChatMessage);
     document.getElementById("chat-input").addEventListener("keydown", event => { if (event.key === "Enter") sendChatMessage(); });
 
-    // Initialize Socket.IO
+    // Initialize Socket.IO with bounded retries for serverless/edge environments
     try {
-      const socket = io({ auth: { token: accessToken } });
+      const socket = io({
+        auth: { token: accessToken },
+        reconnectionAttempts: 2,
+        timeout: 3000,
+        transports: ["websocket", "polling"],
+        autoConnect: true,
+      });
       socket.on("connect", () => console.log("Socket connected"));
+      socket.on("connect_error", (err) => {
+        // Stop retrying if serverless backend does not support WebSockets
+        socket.disconnect();
+      });
       socket.on("disconnect", () => console.log("Socket disconnected"));
       window.socket = socket;
     } catch (err) {
-      console.warn("Socket.IO connection failed:", err);
+      console.warn("Socket.IO initialization skipped:", err);
     }
 
     loadUserInfo();
+
   </script>
 
   {% block scripts %}
