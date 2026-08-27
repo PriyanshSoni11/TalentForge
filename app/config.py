@@ -14,7 +14,7 @@ def get_config():
         "JWT_ACCESS_TOKEN_EXPIRES_MIN": int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_MIN", 60)),
         "JWT_REFRESH_TOKEN_EXPIRES_DAYS": int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", 7)),
         "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
-        "GEMINI_MODEL": os.getenv("GEMINI_MODEL", "gemini-3.5-flash"),
+        "GEMINI_MODEL": os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
         "RAG_EMBEDDING_MODEL": os.getenv("RAG_EMBEDDING_MODEL", "models/gemini-embedding-001"),
         "SOCKETIO_MESSAGE_QUEUE": os.getenv("SOCKETIO_MESSAGE_QUEUE") or None,
     }

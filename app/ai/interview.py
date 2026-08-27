@@ -92,7 +92,7 @@ def score_interview_response(question, media_file_uri, required_skill):
     if media_file_uri:
         try:
             genai.configure(api_key=current_app.config["GOOGLE_API_KEY"])
-            model_name = current_app.config.get("GEMINI_MODEL", "gemini-3.5-flash")
+            model_name = current_app.config.get("GEMINI_MODEL", "gemini-3.6-flash")
             model = genai.GenerativeModel(model_name)
 
             media_file = genai.get_file(media_file_uri)
