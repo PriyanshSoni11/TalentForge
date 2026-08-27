@@ -379,6 +379,13 @@
     document.getElementById("activity-close").addEventListener("click", () => activityDialog.classList.add("hidden"));
     document.getElementById("activity-backdrop").addEventListener("click", () => activityDialog.classList.add("hidden"));
 
+    const ctaPostJobBtn = document.getElementById("cta-post-job");
+    if (ctaPostJobBtn) {
+      ctaPostJobBtn.addEventListener("click", () => {
+        window.location.href = "/dashboard/industry/postings";
+      });
+    }
+
     loadMe();
     loadDashboard();
   </script>

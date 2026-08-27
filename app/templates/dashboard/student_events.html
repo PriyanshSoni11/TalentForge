@@ -1,9 +1,125 @@
 {% extends "dashboard/base_layout.html" %}
+
 {% block page_title %}Company Events · TalentForge{% endblock %}
-{% block sidebar_nav %}<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p><nav class="space-y-1 mb-6"><a href="/dashboard/student" class="nav">Overview</a><a href="/dashboard/student/roles" class="nav">Explore roles</a><a href="/dashboard/student/courses" class="nav">Learning paths</a><a href="/dashboard/student/portfolio" class="nav">My portfolio</a><a href="/dashboard/student/applications" class="nav">Applications</a></nav><p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p><nav class="space-y-1"><a href="/dashboard/student/mentors" class="nav">Mentors</a><a href="/dashboard/student/events" class="nav bg-brand-50 text-ink font-medium">Company events</a></nav>{% endblock %}
-{% block content %}<div class="space-y-6"><div><p class="text-sm font-semibold text-brand-600 mb-2">Meet the people behind the opportunities</p><h1 class="text-3xl font-bold mb-2">Company events</h1><p class="text-brand-600">Find fairs, workshops, and live sessions hosted by industry teams.</p></div><div id="events-grid" class="grid md:grid-cols-2 gap-5"><p class="text-brand-600">Loading events...</p></div></div>{% endblock %}
-{% block scripts %}<script>
-const eventToken = localStorage.getItem("access_token");
-async function loadEvents() { const response = await fetch("/api/students/events", { headers: { "Authorization": `Bearer ${eventToken}` } }); const events = response.ok ? await response.json() : []; const grid = document.getElementById("events-grid"); grid.innerHTML = events.length ? events.map(event => `<article class="bg-white border border-brand-100 rounded-xl p-5"><div class="flex justify-between gap-3"><div><h2 class="font-semibold text-ink">${event.title}</h2><p class="text-sm text-brand-600 mt-1">${event.location}</p></div><span class="text-xs text-brand-500">${new Date(event.starts_at).toLocaleDateString()}</span></div><p class="text-sm text-brand-700 mt-4">${event.description}</p><button data-event="${event.id}" class="rsvp mt-5 w-full ${event.is_rsvped ? "bg-brand-100 text-brand-800" : "bg-brand-700 text-white"} py-2 rounded-lg text-sm font-medium">${event.is_rsvped ? "RSVP confirmed" : "Save my spot"}</button></article>`).join("") : `<div class="md:col-span-2 bg-white border border-brand-100 rounded-xl p-8 text-center text-brand-600">No upcoming events yet.</div>`; document.querySelectorAll(".rsvp").forEach(button => button.onclick = async () => { const result = await fetch(`/api/students/events/${button.dataset.event}/rsvp`, { method: "POST", headers: { "Authorization": `Bearer ${eventToken}` } }); if (result.ok) loadEvents(); }); }
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/student" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Overview</a>
+  <a href="/dashboard/student/roles" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Explore roles</a>
+  <a href="/dashboard/student/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Learning paths</a>
+  <a href="/dashboard/student/portfolio" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">My portfolio</a>
+  <a href="/dashboard/student/applications" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Applications</a>
+</nav>
+
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/student/mentors" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Mentors</a>
+  <a href="/dashboard/student/events" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-semibold text-sm">Company events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <p class="text-xs font-bold uppercase tracking-wider text-brand-500 mb-1">Meet Industry Leaders</p>
+    <h1 class="text-2xl sm:text-3xl font-bold text-ink">Company Events</h1>
+    <p class="text-sm sm:text-base text-brand-600 mt-1">Discover campus hiring fairs, tech workshops, and live Q&amp;A sessions hosted by partner companies.</p>
+  </div>
+
+  <div id="events-grid" class="grid md:grid-cols-2 gap-5">
+    <div class="md:col-span-2 bg-white border border-brand-100 rounded-2xl p-12 text-center text-brand-600">
+      <div class="inline-block animate-spin w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full mb-3"></div>
+      <p class="font-medium text-sm">Loading company events...</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function escHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+async function loadEvents() {
+  const token = localStorage.getItem("access_token");
+  try {
+    const response = await fetch("/api/students/events", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const events = response.ok ? await response.json() : [];
+    const grid = document.getElementById("events-grid");
+
+    if (!events.length) {
+      grid.innerHTML = `
+        <div class="md:col-span-2 bg-white border border-brand-100 rounded-2xl p-12 text-center text-brand-600">
+          <div class="h-12 w-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3 text-xl">📅</div>
+          <h3 class="font-bold text-ink mb-1">No upcoming events yet</h3>
+          <p class="text-brand-500 text-sm">Check back soon for new recruitment sessions, workshops, and webinars.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = events.map(event => {
+      const dateStr = event.starts_at 
+        ? new Date(event.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+        : "Upcoming";
+      
+      const isRsvped = Boolean(event.is_rsvped);
+
+      return `
+        <article class="bg-white border border-brand-100 rounded-2xl p-6 hover:shadow-md transition flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <h2 class="text-lg font-bold text-ink leading-snug">${escHtml(event.title)}</h2>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100 shrink-0">
+                ${dateStr}
+              </span>
+            </div>
+            <p class="text-xs text-brand-500 font-medium flex items-center gap-1.5 mb-3">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>${escHtml(event.location || "Online Session")}</span>
+            </p>
+            <p class="text-sm text-brand-700 leading-relaxed">${escHtml(event.description || "No description provided.")}</p>
+          </div>
+          <div class="pt-4 border-t border-brand-50">
+            <button data-event="${event.id}" class="rsvp-btn w-full ${isRsvped ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100' : 'bg-brand-700 text-white hover:bg-brand-800'} py-2.5 rounded-xl text-sm font-semibold transition shadow-xs flex items-center justify-center gap-2">
+              ${isRsvped ? '<span>✓ RSVP Confirmed</span>' : '<span>Save My Spot &rarr;</span>'}
+            </button>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    document.querySelectorAll(".rsvp-btn").forEach(button => {
+      button.onclick = async () => {
+        const eventId = button.dataset.event;
+        button.disabled = true;
+        try {
+          const result = await fetch(`/api/students/events/${eventId}/rsvp`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (result.ok) {
+            await loadEvents();
+          }
+        } catch (e) {
+          console.error("RSVP error:", e);
+        } finally {
+          button.disabled = false;
+        }
+      };
+    });
+  } catch (err) {
+    console.error("Events error:", err);
+    document.getElementById("events-grid").innerHTML = `
+      <div class="md:col-span-2 bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700">
+        Could not load company events. Please try again.
+      </div>`;
+  }
+}
+
 loadEvents();
-</script>{% endblock %}
+</script>
+{% endblock %}

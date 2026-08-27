@@ -75,7 +75,7 @@
         localStorage.setItem("role", data.user.role);
         localStorage.setItem("user_id", data.user.id);
 
-        window.location.href = data.user.role === "student" ? "/assessment" : "/dashboard/industry";
+        window.location.href = data.user.role === "student" ? "/dashboard/student" : "/dashboard/industry";
       } catch (err) {
         console.error("Login error:", err);
         showError("Network error, please try again.");

@@ -1,9 +1,105 @@
 {% extends "dashboard/base_layout.html" %}
+
 {% block page_title %}Talent Network · TalentForge{% endblock %}
-{% block sidebar_nav %}<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p><nav class="space-y-1 mb-6"><a href="/dashboard/industry" class="nav">Overview</a><a href="/dashboard/industry/candidates" class="nav">Candidates</a><a href="/dashboard/industry/postings" class="nav">Postings</a><a href="/dashboard/industry/courses" class="nav">Courses</a></nav><p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p><nav class="space-y-1"><a href="/dashboard/industry/network" class="nav bg-brand-50 text-ink font-medium">Talent network</a><a href="/dashboard/industry/events" class="nav">Campus events</a></nav>{% endblock %}
-{% block content %}<div class="space-y-6"><div><p class="text-sm font-semibold text-brand-600 mb-2">People building better pathways</p><h1 class="text-3xl font-bold mb-2">Talent network</h1><p class="text-brand-600">Discover recruiters, hiring leaders, and mentors across the community.</p></div><div id="network-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5"><p class="text-brand-600">Loading network...</p></div></div>{% endblock %}
-{% block scripts %}<script>
-const networkToken = localStorage.getItem("access_token");
-async function loadNetwork() { const response = await fetch("/api/industry/network", { headers: { "Authorization": `Bearer ${networkToken}` } }); const people = response.ok ? await response.json() : []; document.getElementById("network-grid").innerHTML = people.length ? people.map(person => `<article class="bg-white border border-brand-100 rounded-xl p-5"><div class="flex items-center gap-3"><div class="h-10 w-10 rounded-full bg-ink text-white flex items-center justify-center font-semibold">${person.name.charAt(0).toUpperCase()}</div><div><h2 class="font-semibold text-ink">${person.name}</h2><p class="text-xs text-brand-600">${person.headline || "Industry professional"}</p></div></div><div class="flex flex-wrap gap-1.5 mt-5">${(person.expertise || []).map(skill => `<span class="px-2 py-1 rounded bg-sky-50 text-sky-700 text-xs">${skill}</span>`).join("")}</div><p class="text-xs text-brand-500 mt-4">${person.availability || "Open to connecting"}</p></article>`).join("") : `<div class="md:col-span-2 xl:col-span-3 bg-white border border-brand-100 rounded-xl p-8 text-center text-brand-600">No other professionals are visible yet.</div>`; }
+
+{% block sidebar_nav %}
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Workspace</p>
+<nav class="space-y-1 mb-6">
+  <a href="/dashboard/industry" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Overview</a>
+  <a href="/dashboard/industry/candidates" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Candidates</a>
+  <a href="/dashboard/industry/postings" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">My Postings</a>
+  <a href="/dashboard/industry/courses" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">My Courses</a>
+</nav>
+
+<p class="px-2 text-[11px] font-semibold tracking-wide text-brand-400 uppercase mb-2">Connect</p>
+<nav class="space-y-1">
+  <a href="/dashboard/industry/network" class="flex items-center px-3 py-2 rounded-lg bg-brand-50 text-ink font-semibold text-sm">Talent network</a>
+  <a href="/dashboard/industry/events" class="flex items-center px-3 py-2 rounded-lg text-sm text-brand-700 hover:bg-brand-50 transition">Campus events</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <p class="text-xs font-bold uppercase tracking-wider text-brand-500 mb-1">Professional Directory</p>
+    <h1 class="text-2xl sm:text-3xl font-bold text-ink">Talent Network</h1>
+    <p class="text-sm sm:text-base text-brand-600 mt-1">Discover recruiters, industry mentors, and hiring leaders across the TalentForge ecosystem.</p>
+  </div>
+
+  <div id="network-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="md:col-span-2 xl:col-span-3 bg-white border border-brand-100 rounded-2xl p-12 text-center text-brand-600">
+      <div class="inline-block animate-spin w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full mb-3"></div>
+      <p class="font-medium text-sm">Loading talent network...</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function escHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+async function loadNetwork() {
+  const token = localStorage.getItem("access_token");
+  try {
+    const response = await fetch("/api/industry/network", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const people = response.ok ? await response.json() : [];
+    const grid = document.getElementById("network-grid");
+
+    if (!people.length) {
+      grid.innerHTML = `
+        <div class="md:col-span-2 xl:col-span-3 bg-white border border-brand-100 rounded-2xl p-12 text-center text-brand-600">
+          <div class="h-12 w-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3 text-xl">👥</div>
+          <h3 class="font-bold text-ink mb-1">No other professionals visible yet</h3>
+          <p class="text-brand-500 text-sm">New recruiters and mentors will appear here as they join the network.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = people.map(person => {
+      const initial = (person.name || "P")[0].toUpperCase();
+      const skills = (person.expertise || []).slice(0, 4);
+      return `
+        <article class="bg-white border border-brand-100 rounded-2xl p-5 hover:shadow-md transition flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="h-11 w-11 rounded-full bg-ink text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                ${initial}
+              </div>
+              <div class="min-w-0 flex-1">
+                <h2 class="font-bold text-ink truncate text-base">${escHtml(person.name)}</h2>
+                <p class="text-xs text-brand-600 truncate mt-0.5">${escHtml(person.headline || "Industry Professional")}</p>
+              </div>
+            </div>
+            ${person.bio ? `<p class="text-xs text-brand-700 leading-relaxed mb-3 line-clamp-2">${escHtml(person.bio)}</p>` : ""}
+            ${skills.length ? `
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                ${skills.map(s => `<span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 text-[11px] font-medium border border-sky-100">${escHtml(s)}</span>`).join("")}
+              </div>
+            ` : ""}
+          </div>
+          <div class="pt-3 border-t border-brand-50 flex items-center justify-between text-xs text-brand-500">
+            <span class="flex items-center gap-1.5">
+              <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+              <span>${escHtml(person.availability || "Open to connecting")}</span>
+            </span>
+          </div>
+        </article>
+      `;
+    }).join("");
+  } catch (err) {
+    console.error("Network error:", err);
+    document.getElementById("network-grid").innerHTML = `
+      <div class="md:col-span-2 xl:col-span-3 bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700">
+        Could not load talent network. Please try again.
+      </div>`;
+  }
+}
+
 loadNetwork();
-</script>{% endblock %}
+</script>
+{% endblock %}

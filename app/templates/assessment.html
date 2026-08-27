@@ -4,84 +4,216 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skill Assessment &middot; TalentForge</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/icon.svg') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#F0FBF4', 100: '#DFF3E6', 200: '#BEE7CC', 300: '#8FD3A9',
+              400: '#5AB87F', 500: '#379E63', 600: '#2A8452', 700: '#236B44',
+              800: '#1C5236', 900: '#123420'
+            },
+            sky: {
+              50: '#EEF3FF', 100: '#DCE7FF', 200: '#B7CCFF', 300: '#8CADFF',
+              400: '#5C88FA', 500: '#3C68E8', 600: '#2C4FCB', 700: '#2540A0'
+            },
+            sun: {
+              50: '#FFFBEA', 100: '#FFF3C4', 200: '#FCE588', 300: '#FADB5F',
+              400: '#F7C948', 500: '#F0B429', 600: '#DE911D', 700: '#CB6E17'
+            },
+            ink: '#12211B',
+            offwhite: '#FAF9F5'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .option-card:has(input:checked) {
+      border-color: #236B44;
+      background-color: #F0FBF4;
+      box-shadow: 0 0 0 1px #236B44;
+    }
+  </style>
 </head>
-<body class="bg-[#FAF9F5] text-[#173428] min-h-screen">
-  <main class="max-w-3xl mx-auto px-4 py-10">
-    <div class="flex items-center justify-between mb-8">
-      <a href="/" aria-label="TalentForge home"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-9 w-auto" /></a>
-      <button id="skip" class="text-sm text-green-700 underline">Skip for now</button>
+<body class="bg-offwhite text-ink min-h-screen font-sans">
+  <main class="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+    <div class="flex items-center justify-between mb-6 sm:mb-8">
+      <a href="/" aria-label="TalentForge home" class="flex items-center gap-2">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-10 w-auto" />
+      </a>
+      <button id="skip" class="text-sm font-semibold text-brand-700 hover:text-brand-900 transition">Skip for now &rarr;</button>
     </div>
-    <section class="bg-white border border-green-100 rounded-2xl p-6 md:p-8">
-      <p class="text-xs font-semibold uppercase tracking-wide text-green-600">Student onboarding</p>
-      <h1 class="text-3xl font-bold mt-2">Validate your skills</h1>
-      <p class="text-green-700 mt-2">Answer 20 questions based on the skills found in your resume. You can skip now, but assessment completion is required before applying.</p>
-      <div id="progress" class="h-2 bg-green-100 rounded-full mt-6"><div id="progress-bar" class="h-2 bg-green-700 rounded-full" style="width:0%"></div></div>
-      <p id="status" class="text-sm text-green-600 mt-3">Loading your assessment...</p>
-      <form id="assessment-form" class="space-y-6 mt-6"></form>
-      <button id="submit" class="hidden w-full bg-green-700 text-white py-3 rounded-lg font-medium hover:bg-green-800">Submit assessment</button>
-      <div id="result" class="hidden mt-6 rounded-xl bg-green-50 border border-green-200 p-5"></div>
+
+    <section class="bg-white border border-brand-100 rounded-3xl p-6 sm:p-10 shadow-sm space-y-6">
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-brand-500">Student Onboarding</span>
+          <span id="answered-counter" class="text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-100 px-3 py-1 rounded-full">0 of 20 answered</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-ink mt-2">Validate Your Skills</h1>
+        <p class="text-sm sm:text-base text-brand-600 mt-1.5 leading-relaxed">
+          Answer 20 multiple-choice questions curated from your resume skills. Completing this assessment verifies your profile and unlocks direct employer applications.
+        </p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="space-y-1.5">
+        <div class="h-2 bg-brand-100 rounded-full overflow-hidden">
+          <div id="progress-bar" class="h-2 bg-brand-700 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <p id="status" class="text-xs font-medium text-brand-500">Loading your assessment questions…</p>
+      </div>
+
+      <!-- Question Form -->
+      <form id="assessment-form" class="space-y-6 pt-2"></form>
+
+      <!-- Submit Button -->
+      <button id="submit" class="hidden w-full bg-brand-700 hover:bg-brand-800 text-white py-3.5 rounded-xl font-bold text-base shadow-sm hover:shadow-md transition">
+        Submit Assessment &rarr;
+      </button>
+
+      <!-- Completed Result Box -->
+      <div id="result" class="hidden rounded-2xl bg-brand-50 border border-brand-200 p-6 sm:p-8 text-center space-y-4"></div>
     </section>
   </main>
+
   <script>
     const token = localStorage.getItem("access_token");
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = { "Authorization": `Bearer ${token}` };
     const form = document.getElementById("assessment-form");
     const submit = document.getElementById("submit");
     const status = document.getElementById("status");
+    const counterEl = document.getElementById("answered-counter");
     let assessmentId;
     let questions = [];
+
+    function esc(str) {
+      return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+    }
 
     function goDashboard() { window.location.href = "/dashboard/student"; }
     document.getElementById("skip").addEventListener("click", goDashboard);
 
     async function loadAssessment() {
       if (!token) { window.location.href = "/student/login"; return; }
-      const response = await fetch("/api/students/assessment/start", { method: "POST", headers });
-      const data = await response.json();
-      if (!response.ok) {
-        if (response.status === 409) { goDashboard(); return; }
-        status.textContent = data.error || "Could not load assessment.";
-        return;
+      try {
+        const response = await fetch("/api/students/assessment/start", { method: "POST", headers });
+        const data = await response.json();
+        
+        if (!response.ok) {
+          if (response.status === 409) { goDashboard(); return; }
+          status.textContent = data.error || "Could not load assessment.";
+          return;
+        }
+
+        assessmentId = data.assessment_id;
+        questions = data.questions || [];
+        status.textContent = `${questions.length} questions loaded based on your resume skills.`;
+        
+        form.innerHTML = questions.map((question, index) => `
+          <fieldset class="border-b border-brand-100 pb-6 last:border-0 last:pb-0">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <legend class="font-bold text-ink text-base sm:text-lg leading-snug">${index + 1}. ${esc(question.question)}</legend>
+              <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 border border-brand-100 shrink-0">
+                ${esc(question.skill_tag)}
+              </span>
+            </div>
+            <div class="space-y-2 mt-3">
+              ${question.options.map((option, optionIndex) => `
+                <label class="option-card flex items-start gap-3 border border-brand-100 rounded-xl p-3.5 cursor-pointer hover:bg-brand-50/60 transition">
+                  <input required type="radio" name="question-${question.id}" value="${optionIndex}" class="mt-1 accent-brand-700" />
+                  <span class="text-sm text-brand-900 leading-relaxed">${esc(option)}</span>
+                </label>
+              `).join("")}
+            </div>
+          </fieldset>
+        `).join("");
+
+        submit.classList.remove("hidden");
+        updateProgress();
+        form.addEventListener("change", updateProgress);
+      } catch (err) {
+        console.error("Load assessment error:", err);
+        status.textContent = "Network error while loading questions. Please reload.";
       }
-      assessmentId = data.assessment_id;
-      questions = data.questions || [];
-      status.textContent = `${questions.length} questions from your resume skills`;
-      form.innerHTML = questions.map((question, index) => `
-        <fieldset class="border-b border-green-100 pb-5">
-          <legend class="font-semibold">${index + 1}. ${question.question}</legend>
-          <p class="text-xs text-green-600 mt-1 mb-3">Skill: ${question.skill_tag}</p>
-          <div class="space-y-2">${question.options.map((option, optionIndex) => `
-            <label class="flex gap-3 items-start border border-green-100 rounded-lg p-3 cursor-pointer hover:bg-green-50">
-              <input required type="radio" name="question-${question.id}" value="${optionIndex}" class="mt-1" />
-              <span>${option}</span>
-            </label>`).join("")}</div>
-        </fieldset>`).join("");
-      submit.classList.remove("hidden");
-      updateProgress();
-      form.addEventListener("change", updateProgress);
     }
+
     function updateProgress() {
       const answered = form.querySelectorAll("input:checked").length;
-      document.getElementById("progress-bar").style.width = `${questions.length ? answered / questions.length * 100 : 0}%`;
+      const total = questions.length || 20;
+      const pct = Math.round((answered / total) * 100);
+      document.getElementById("progress-bar").style.width = `${pct}%`;
+      counterEl.textContent = `${answered} of ${total} answered`;
+      status.textContent = answered === total ? "All 20 questions answered! Ready to submit." : `${total - answered} question(s) remaining.`;
     }
+
     submit.addEventListener("click", async (event) => {
       event.preventDefault();
       if (!form.reportValidity()) return;
+
+      submit.disabled = true;
+      submit.innerHTML = `<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Grading your assessment…</span>`;
+
       const answers = {};
-      questions.forEach(question => { answers[question.id] = Number(form.querySelector(`input[name="question-${question.id}"]:checked`).value); });
-      const response = await fetch(`/api/students/assessment/${assessmentId}/submit`, {
-        method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ answers })
+      questions.forEach(question => {
+        const checked = form.querySelector(`input[name="question-${question.id}"]:checked`);
+        if (checked) {
+          answers[question.id] = Number(checked.value);
+        }
       });
-      const data = await response.json();
-      if (!response.ok) { status.textContent = data.error || "Could not submit assessment."; return; }
-      submit.classList.add("hidden");
-      document.getElementById("skip").classList.add("hidden");
-      document.getElementById("result").innerHTML = `<h2 class="text-xl font-bold">Assessment complete</h2><p class="mt-2">Your score: <strong>${data.score_pct}%</strong></p><p class="text-sm mt-2">Your validated skills are now used to match you with opportunities.</p><button id="continue" class="mt-4 bg-green-700 text-white px-4 py-2 rounded-lg">Continue to dashboard</button>`;
-      document.getElementById("result").classList.remove("hidden");
-      document.getElementById("continue").addEventListener("click", goDashboard);
+
+      try {
+        const response = await fetch(`/api/students/assessment/${assessmentId}/submit`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ answers })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          status.textContent = data.error || "Could not submit assessment.";
+          submit.disabled = false;
+          submit.textContent = "Submit Assessment →";
+          return;
+        }
+
+        submit.classList.add("hidden");
+        document.getElementById("skip").classList.add("hidden");
+        form.classList.add("hidden");
+
+        const resultEl = document.getElementById("result");
+        resultEl.innerHTML = `
+          <div class="h-16 w-16 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
+          <h2 class="text-2xl font-extrabold text-ink">Assessment Complete</h2>
+          <p class="text-base text-brand-700">Verified Readiness Score: <strong class="text-xl font-extrabold text-brand-900">${data.score_pct}%</strong></p>
+          <p class="text-xs text-brand-600 max-w-md mx-auto leading-relaxed">
+            Your validated competencies have been saved to your profile and are now active for matching with employer roles and AI interviews.
+          </p>
+          <button id="continue" class="bg-brand-700 hover:bg-brand-800 text-white font-bold px-8 py-3 rounded-xl transition shadow-sm inline-block">
+            Continue to Dashboard &rarr;
+          </button>
+        `;
+        resultEl.classList.remove("hidden");
+        document.getElementById("continue").addEventListener("click", goDashboard);
+      } catch (err) {
+        console.error("Submit assessment error:", err);
+        status.textContent = "Network error submitting assessment. Please try again.";
+        submit.disabled = false;
+        submit.textContent = "Submit Assessment →";
+      }
     });
-    loadAssessment().catch(() => { status.textContent = "Network error, please try again."; });
+
+    loadAssessment();
   </script>
 </body>
 </html>
