@@ -18,6 +18,10 @@
       offwhite: '#FAF9F5'
     } } } }
   </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body class="bg-offwhite text-ink min-h-screen">
@@ -154,19 +158,36 @@
         <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           <div class="space-y-6">
 
-            <div id="opportunities" class="bg-white border border-brand-100 rounded-2xl p-6">
-              <div class="flex items-center justify-between mb-4">
+            <div id="opportunities" class="bg-white border border-brand-100 rounded-2xl p-4 sm:p-6 shadow-xs">
+              <div class="flex items-center justify-between mb-3.5 sm:mb-4 gap-2">
                 <div>
-                  <p class="text-xs font-semibold tracking-wide text-brand-400 uppercase">Curated for you</p>
-                  <h2 class="text-xl font-bold">Recommended opportunities</h2>
+                  <p class="text-[11px] sm:text-xs font-semibold tracking-wider text-brand-500 uppercase">Curated for you</p>
+                  <h2 class="text-lg sm:text-xl font-bold text-ink tracking-tight">Recommended opportunities</h2>
+                </div>
+                <a href="/dashboard/student/roles" class="text-xs font-semibold text-brand-700 hover:text-brand-900 transition inline-flex items-center gap-1 shrink-0 px-2.5 py-1.5 rounded-lg hover:bg-brand-50">
+                  <span>Explore all</span> &rarr;
+                </a>
+              </div>
+              <div class="flex items-center gap-2 sm:gap-4 border-b border-brand-100 mb-4 text-xs sm:text-sm overflow-x-auto whitespace-nowrap pb-2 no-scrollbar">
+                <button data-tab="all" class="tab-btn pb-2 px-1 border-b-2 border-ink font-semibold text-ink transition inline-flex items-center gap-1.5 shrink-0">
+                  <span>All for you</span>
+                  <span id="tab-count-all" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-100 text-brand-800">0</span>
+                </button>
+                <button data-tab="internship" class="tab-btn pb-2 px-1 border-b-2 border-transparent text-brand-500 hover:text-ink transition inline-flex items-center gap-1.5 shrink-0">
+                  <span>Internships</span>
+                  <span id="tab-count-internship" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">0</span>
+                </button>
+                <button data-tab="job" class="tab-btn pb-2 px-1 border-b-2 border-transparent text-brand-500 hover:text-ink transition inline-flex items-center gap-1.5 shrink-0">
+                  <span>Entry-level jobs</span>
+                  <span id="tab-count-job" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">0</span>
+                </button>
+              </div>
+              <div id="jobs-list" class="divide-y divide-brand-100/80">
+                <div class="py-8 text-center flex flex-col items-center justify-center">
+                  <div class="w-6 h-6 rounded-full border-2 border-brand-600 border-t-transparent animate-spin mb-2.5"></div>
+                  <p class="text-xs text-brand-500 font-medium">Loading recommended opportunities...</p>
                 </div>
               </div>
-              <div class="flex items-center gap-5 border-b border-brand-100 mb-4 text-sm overflow-x-auto whitespace-nowrap pb-1">
-                <button data-tab="all" class="tab-btn pb-2 border-b-2 border-ink font-medium">All for you <span id="tab-count-all" class="text-brand-400">0</span></button>
-                <button data-tab="internship" class="tab-btn pb-2 border-b-2 border-transparent text-brand-500">Internships <span id="tab-count-internship" class="text-brand-400">0</span></button>
-                <button data-tab="job" class="tab-btn pb-2 border-b-2 border-transparent text-brand-500">Entry-level jobs <span id="tab-count-job" class="text-brand-400">0</span></button>
-              </div>
-              <div id="jobs-list" class="divide-y divide-brand-100"></div>
             </div>
 
             <div id="applications" class="bg-white border border-brand-100 rounded-2xl p-6">
@@ -224,6 +245,11 @@
     const authHeaders = () => ({ Authorization: `Bearer ${token()}` });
     let allJobs = [];
     let currentTab = "all";
+    let savedJobIds = new Set();
+
+    function esc(str) {
+      return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+    }
 
     // Sidebar Drawer Handlers
     const sidebar = document.getElementById("sidebar");
@@ -441,50 +467,141 @@
       }
     }
 
+    const typeStyles = {
+      "job": { badge: "bg-sky-50 text-sky-700 border-sky-200", label: "Job" },
+      "internship": { badge: "bg-brand-50 text-brand-700 border-brand-200", label: "Internship" },
+      "apprenticeship": { badge: "bg-sun-50 text-sun-700 border-sun-200", label: "Apprenticeship" }
+    };
+
     function renderJobs() {
       const filtered = currentTab === "all" ? allJobs : allJobs.filter(j => j.type === currentTab);
-      document.getElementById("jobs-list").innerHTML = filtered.map(j => {
+      const jobsListEl = document.getElementById("jobs-list");
+      if (!jobsListEl) return;
+
+      if (!filtered.length) {
+        jobsListEl.innerHTML = `
+          <div class="py-8 px-4 text-center">
+            <div class="h-11 w-11 rounded-2xl bg-brand-50 text-brand-700 flex items-center justify-center mx-auto mb-2.5 text-lg shadow-xs border border-brand-100">
+              💼
+            </div>
+            <h3 class="font-bold text-ink text-sm sm:text-base mb-1">No opportunities in this category</h3>
+            <p class="text-xs text-brand-500 max-w-xs mx-auto mb-3.5 leading-relaxed">
+              Explore all open positions or complete assessments to receive more tailored matches.
+            </p>
+            <a href="/dashboard/student/roles" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-800 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3.5 py-2 rounded-xl transition">
+              <span>Browse All Roles</span> &rarr;
+            </a>
+          </div>`;
+        return;
+      }
+
+      jobsListEl.innerHTML = filtered.map(j => {
         const company = j.users?.name || j.location || "Partner Company";
         const initial = company[0].toUpperCase();
         const skills = (j.required_skills || []).slice(0, 4);
+        const remainingSkills = Math.max(0, (j.required_skills || []).length - 4);
         const matchPct = Math.round((j.match_score || 0.82) * 100);
+        const isSaved = savedJobIds.has(j.id);
+        const typeConf = typeStyles[j.type] || { badge: "bg-brand-50 text-brand-700 border-brand-200", label: j.type || "Role" };
 
         return `
-        <div class="py-4 flex items-center gap-4 hover:bg-brand-50/40 p-2 rounded-xl transition">
-          <div class="h-10 w-10 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center font-bold shrink-0 shadow-xs">${initial}</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <p class="font-bold text-ink truncate text-sm">${j.title}</p>
-              <span class="text-[10px] uppercase font-bold px-2 py-0.2 rounded-full bg-brand-50 text-brand-700 border border-brand-200">${j.type || 'Role'}</span>
+        <div class="py-3.5 sm:py-4 px-1 sm:px-2 hover:bg-brand-50/40 rounded-2xl transition group">
+          <!-- Top Section: Avatar + Title & Meta + Desktop Actions -->
+          <div class="flex items-start gap-3 sm:gap-4">
+            <!-- Company Logo/Initial -->
+            <div class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50 text-brand-800 flex items-center justify-center font-bold text-sm sm:text-base shrink-0 shadow-xs border border-brand-200/50 mt-0.5 sm:mt-0">
+              ${initial}
             </div>
-            <p class="text-xs text-brand-600 mt-0.5">${company} &bull; ${j.location || "Remote"}</p>
-            <div class="flex flex-wrap gap-1.5 mt-2">
-              ${skills.map(s => `<span class="text-[10px] bg-brand-50 text-brand-700 border border-brand-100 px-2 py-0.5 rounded-md font-medium">${s}</span>`).join("")}
+
+            <!-- Details Block -->
+            <div class="flex-1 min-w-0">
+              <!-- Title & Role Badge -->
+              <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
+                <h3 class="font-bold text-ink text-sm sm:text-base leading-snug break-words sm:truncate">${esc(j.title)}</h3>
+                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border shrink-0 tracking-wide ${typeConf.badge}">
+                  ${esc(typeConf.label)}
+                </span>
+              </div>
+
+              <!-- Company & Location Meta -->
+              <div class="flex items-center gap-1.5 text-xs text-brand-600 mt-1 flex-wrap">
+                <span class="font-medium text-brand-800">${esc(company)}</span>
+                <span class="text-brand-300">&bull;</span>
+                <span class="flex items-center gap-1 text-brand-500">
+                  <svg class="w-3 h-3 text-brand-400 shrink-0 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  ${esc(j.location || "Remote")}
+                </span>
+              </div>
+
+              <!-- Skills Badges (Full width on mobile, cleanly wrapped) -->
+              <div class="flex flex-wrap items-center gap-1.5 mt-2.5">
+                ${skills.map(s => `<span class="text-[10px] sm:text-xs bg-brand-50/80 text-brand-700 border border-brand-200/60 px-2 py-0.5 rounded-md font-medium">${esc(s)}</span>`).join("")}
+                ${remainingSkills > 0 ? `<span class="text-[10px] text-brand-400 font-medium self-center">+${remainingSkills} more</span>` : ""}
+              </div>
+            </div>
+
+            <!-- Desktop Actions (Hidden on mobile < sm, visible on desktop) -->
+            <div class="hidden sm:flex items-center gap-3 shrink-0 self-center pl-2">
+              <button data-job="${j.id}" class="save-btn ${isSaved ? 'text-brand-600' : 'text-brand-300'} hover:text-brand-600 p-2 rounded-xl hover:bg-brand-50 transition text-lg leading-none shrink-0" title="${isSaved ? 'Saved' : 'Save role'}">
+                &#128278;
+              </button>
+              <div class="text-right min-w-[50px]">
+                <p class="text-base font-bold text-brand-700 leading-tight">${matchPct}%</p>
+                <p class="text-[10px] text-brand-400 font-medium">match</p>
+              </div>
+              <button data-job="${j.id}" class="apply-job-btn bg-brand-700 hover:bg-brand-800 active:bg-brand-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-xs shrink-0 whitespace-nowrap">
+                <span>Apply</span> &rarr;
+              </button>
             </div>
           </div>
-          <div class="text-right flex items-center gap-3">
-            <button data-job="${j.id}" class="save-btn text-brand-300 hover:text-brand-600 text-lg transition" title="Save role">&#128278;</button>
-            <div class="text-right min-w-12">
-              <p class="text-base font-bold text-brand-700">${matchPct}%</p>
-              <p class="text-[10px] text-brand-400 font-medium">match</p>
+
+          <!-- Mobile Actions Row (Visible on mobile < sm, hidden on desktop >= sm) -->
+          <div class="flex sm:hidden items-center justify-between gap-3 mt-3 pt-2.5 border-t border-brand-100/70">
+            <div class="flex items-center gap-2">
+              <button data-job="${j.id}" class="save-btn ${isSaved ? 'text-brand-600 bg-brand-100/60' : 'text-brand-400 bg-brand-50'} hover:text-brand-600 p-1.5 rounded-xl border border-brand-100 transition text-base leading-none shrink-0 flex items-center justify-center h-8 w-8" title="${isSaved ? 'Saved' : 'Save role'}">
+                &#128278;
+              </button>
+              <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 border border-brand-100">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                <span class="text-xs font-bold text-brand-800">${matchPct}%</span>
+                <span class="text-[10px] text-brand-500 font-medium">match</span>
+              </div>
             </div>
-            <button data-job="${j.id}" class="apply-job-btn bg-brand-700 hover:bg-brand-800 text-white text-xs font-medium px-3.5 py-2 rounded-xl transition shrink-0 flex items-center gap-1 shadow-sm">
-              Apply &rarr;
+            <button data-job="${j.id}" class="apply-job-btn flex-1 max-w-[150px] bg-brand-700 hover:bg-brand-800 active:bg-brand-900 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition flex items-center justify-center gap-1 shadow-xs whitespace-nowrap">
+              <span>Apply</span> &rarr;
             </button>
           </div>
         </div>`;
-      }).join("") || "<p class='text-brand-400 text-sm py-4'>Explore roles to see opportunities tailored for you.</p>";
+      }).join("");
 
       document.querySelectorAll(".save-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const res = await fetch(`/api/students/jobs/${btn.dataset.job}/save`, { method: "POST", headers: authHeaders() });
-          const data = await res.json();
-          btn.classList.toggle("text-brand-600", data.saved);
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const jobId = btn.dataset.job;
+          try {
+            const res = await fetch(`/api/students/jobs/${jobId}/save`, { method: "POST", headers: authHeaders() });
+            const data = await res.json();
+            if (data.saved) {
+              savedJobIds.add(jobId);
+            } else {
+              savedJobIds.delete(jobId);
+            }
+            document.querySelectorAll(`.save-btn[data-job="${jobId}"]`).forEach(b => {
+              b.classList.toggle("text-brand-600", data.saved);
+              b.classList.toggle("text-brand-300", !data.saved);
+              b.classList.toggle("text-brand-400", !data.saved);
+              b.classList.toggle("bg-brand-100/60", data.saved);
+              b.title = data.saved ? "Saved" : "Save role";
+            });
+          } catch (err) {
+            console.error("Save error:", err);
+          }
         });
       });
 
       document.querySelectorAll(".apply-job-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
           applyToJob(btn.dataset.job, btn);
         });
       });
@@ -493,21 +610,47 @@
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         currentTab = btn.dataset.tab;
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("border-ink", "font-medium"));
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.add("border-transparent", "text-brand-500"));
-        btn.classList.add("border-ink", "font-medium");
+        document.querySelectorAll(".tab-btn").forEach(b => {
+          b.classList.remove("border-ink", "font-semibold", "text-ink");
+          b.classList.add("border-transparent", "text-brand-500");
+          const count = b.querySelector("span:last-child");
+          if (count) {
+            count.className = "text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-50 text-brand-600";
+          }
+        });
+        btn.classList.add("border-ink", "font-semibold", "text-ink");
         btn.classList.remove("border-transparent", "text-brand-500");
+        const activeCount = btn.querySelector("span:last-child");
+        if (activeCount) {
+          activeCount.className = "text-[11px] font-medium px-2 py-0.5 rounded-full bg-brand-100 text-brand-800";
+        }
         renderJobs();
       });
     });
 
     async function loadRecommendations() {
-      const jobsRes = await fetch("/api/students/jobs/recommended", { headers: authHeaders() });
-      allJobs = jobsRes.ok ? await jobsRes.json() : [];
-      document.getElementById("nav-jobs-count").textContent = allJobs.length;
-      document.getElementById("tab-count-all").textContent = allJobs.length;
-      document.getElementById("tab-count-internship").textContent = allJobs.filter(j => j.type === "internship").length;
-      document.getElementById("tab-count-job").textContent = allJobs.filter(j => j.type === "job").length;
+      try {
+        const [jobsRes, savedRes] = await Promise.all([
+          fetch("/api/students/jobs/recommended", { headers: authHeaders() }),
+          fetch("/api/students/jobs/saved", { headers: authHeaders() }).catch(() => null)
+        ]);
+        allJobs = jobsRes.ok ? await jobsRes.json() : [];
+        if (savedRes && savedRes.ok) {
+          const savedData = await savedRes.json();
+          savedJobIds = new Set((savedData || []).map(s => s.job_posting_id));
+        }
+      } catch (err) {
+        console.error("Failed to load recommendations:", err);
+        allJobs = [];
+      }
+      const navJobsCount = document.getElementById("nav-jobs-count");
+      if (navJobsCount) navJobsCount.textContent = allJobs.length;
+      const countAll = document.getElementById("tab-count-all");
+      if (countAll) countAll.textContent = allJobs.length;
+      const countInternship = document.getElementById("tab-count-internship");
+      if (countInternship) countInternship.textContent = allJobs.filter(j => j.type === "internship").length;
+      const countJob = document.getElementById("tab-count-job");
+      if (countJob) countJob.textContent = allJobs.filter(j => j.type === "job").length;
       renderJobs();
     }
 
