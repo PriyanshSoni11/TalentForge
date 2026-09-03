@@ -5,9 +5,13 @@ load_dotenv()
 
 
 def get_config():
+    flask_env = os.getenv("FLASK_ENV", "production")
+    debug_val = os.getenv("DEBUG", "").lower()
+    is_debug = debug_val in ("true", "1") if debug_val else (flask_env == "development")
+
     return {
         "SECRET_KEY": os.getenv("SECRET_KEY", "dev"),
-        "DEBUG": os.getenv("FLASK_ENV", "development") == "development",
+        "DEBUG": is_debug,
         "SUPABASE_URL": os.getenv("SUPABASE_URL"),
         "SUPABASE_KEY": os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY"),
         "JWT_SECRET": os.getenv("JWT_SECRET", "dev-jwt-secret"),

@@ -1,9 +1,10 @@
+import concurrent.futures
 import datetime
 import os
 import tempfile
 import uuid
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 
 from werkzeug.utils import secure_filename
 from app.extensions import get_supabase, socketio
@@ -479,7 +480,7 @@ def get_interview(interview_id):
         "id, question_text, order_index"
     ).eq("interview_id", interview_id).order("order_index").execute().data
     responses = supabase.table("interview_responses").select(
-        "question_id, score_pct, feedback"
+        "question_id, score_pct, feedback, transcript, video_url"
     ).eq("interview_id", interview_id).execute().data
     return jsonify({"interview": interview[0], "questions": questions, "responses": responses})
 
@@ -507,9 +508,6 @@ def submit_interview_response(interview_id):
     ).eq("student_id", request.user["id"]).eq("status", "in_progress").execute().data
     if not interview:
         return jsonify({"error": "active interview not found"}), 404
-    interview = interview[0]
-    job_rows = supabase.table("job_postings").select("required_skills").eq("id", interview["job_posting_id"]).execute().data
-    job = job_rows[0] if job_rows else {}
 
     file_bytes = file.read()
     storage_path = f"{interview_id}/{question_id}_{uuid.uuid4().hex[:8]}_{file.filename}"
@@ -519,8 +517,6 @@ def submit_interview_response(interview_id):
         media_url = supabase.storage.from_("interviews").get_public_url(storage_path)
     except Exception:
         media_url = f"https://storage.local/{storage_path}"
-
-    skill_hint = (job.get("required_skills") or ["communication"])[0]
 
     media_uri = None
     try:
@@ -535,19 +531,19 @@ def submit_interview_response(interview_id):
     except Exception:
         media_uri = None
 
-    result = score_interview_response(question["question_text"], media_uri, skill_hint)
-
     existing_resp = supabase.table("interview_responses").select("id").eq(
         "interview_id", interview_id
     ).eq("question_id", question_id).execute().data
 
+    # Save recorded answer without evaluating yet (evaluation happens after all questions are completed)
     row_data = {
         "interview_id": interview_id,
         "question_id": question_id,
         "video_url": media_url,
-        "transcript": result.get("transcript", "Response recorded and evaluated successfully."),
-        "score_pct": result.get("score_pct", 80),
-        "feedback": result.get("feedback", f"Solid answer addressing core aspects of {skill_hint}."),
+        "audio_url": media_uri,
+        "transcript": "Response recorded. Pending final evaluation.",
+        "score_pct": None,
+        "feedback": "Your answer will be evaluated when all questions are completed.",
     }
 
     if existing_resp:
@@ -563,13 +559,81 @@ def submit_interview_response(interview_id):
 @roles_required(ROLE_STUDENT)
 def complete_interview(interview_id):
     supabase = get_supabase()
-    responses = supabase.table("interview_responses").select("score_pct").eq("interview_id", interview_id).execute().data
-    if not responses:
-        return jsonify({"error": "no responses recorded"}), 400
 
-    overall = round(sum(r["score_pct"] for r in responses) / len(responses), 1)
+    # 1. Verify active interview exists
+    interview_rows = supabase.table("interviews").select(
+        "id, student_id, job_posting_id, status, job_postings(title, posted_by, required_skills)"
+    ).eq("id", interview_id).eq("student_id", request.user["id"]).execute().data
+    if not interview_rows:
+        return jsonify({"error": "interview not found"}), 404
+    interview = interview_rows[0]
+
+    # 2. Fetch all questions for this interview
+    all_questions = supabase.table("interview_questions").select(
+        "id, question_text, order_index"
+    ).eq("interview_id", interview_id).order("order_index").execute().data
+    if not all_questions:
+        return jsonify({"error": "no questions found for this interview"}), 400
+
+    # 3. Fetch all recorded responses
+    existing_responses = supabase.table("interview_responses").select(
+        "id, question_id, score_pct, feedback, transcript, audio_url, video_url"
+    ).eq("interview_id", interview_id).execute().data
+
+    resp_by_qid = {r["question_id"]: r for r in existing_responses}
+    missing = [q for q in all_questions if q["id"] not in resp_by_qid]
+    if missing:
+        return jsonify({
+            "error": f"Please answer all {len(all_questions)} questions before submitting ({len(missing)} remaining)."
+        }), 400
+
+    # 4. Extract skills for scoring context
+    job_info = interview.get("job_postings") or {}
+    skills = job_info.get("required_skills") or ["communication", "problem solving"]
+
+    # 5. Concurrently evaluate all answers
+    app = current_app._get_current_object()
+
+    def evaluate_response(q):
+        resp = resp_by_qid[q["id"]]
+        if resp.get("score_pct") is None:
+            skill_hint = skills[q.get("order_index", 0) % len(skills)]
+            with app.app_context():
+                media_uri = resp.get("audio_url")
+                eval_res = score_interview_response(q["question_text"], media_uri, skill_hint)
+
+            score = eval_res.get("score_pct", 80)
+            transcript = eval_res.get("transcript", "Response recorded and evaluated.")
+            feedback = eval_res.get("feedback", f"Solid answer addressing core aspects of {skill_hint}.")
+
+            update_data = {
+                "score_pct": score,
+                "transcript": transcript,
+                "feedback": feedback,
+            }
+            supabase.table("interview_responses").update(update_data).eq("id", resp["id"]).execute()
+            resp.update(update_data)
+
+        return {
+            "question_id": q["id"],
+            "question_text": q["question_text"],
+            "order_index": q.get("order_index", 0),
+            "score_pct": resp.get("score_pct", 80),
+            "transcript": resp.get("transcript", ""),
+            "feedback": resp.get("feedback", ""),
+        }
+
+    max_workers = min(5, len(all_questions))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        evaluations = list(executor.map(evaluate_response, all_questions))
+
+    evaluations.sort(key=lambda x: x["order_index"])
+
+    # 6. Calculate overall score
+    overall = round(sum(e["score_pct"] for e in evaluations) / len(evaluations), 1)
     passed = overall > PASS_THRESHOLD_PCT
 
+    # 7. Update interview status
     update = {
         "status": "completed",
         "overall_score_pct": overall,
@@ -580,26 +644,28 @@ def complete_interview(interview_id):
         "student_id", request.user["id"]
     ).execute()
 
+    # 8. If passed, submit application & emit notifications
     application = None
     if passed:
-        interview = supabase.table("interviews").select(
-            "student_id, job_posting_id, job_postings(title, posted_by)"
-        ).eq("id", interview_id).execute().data[0]
         application = supabase.table("applications").insert({
-            "job_posting_id": interview["job_posting_id"], "student_id": interview["student_id"],
-            "interview_id": interview_id, "status": "submitted",
+            "job_posting_id": interview["job_posting_id"],
+            "student_id": interview["student_id"],
+            "interview_id": interview_id,
+            "status": "submitted",
         }).execute().data[0]
 
-        posted_by = (interview.get("job_postings") or {}).get("posted_by")
+        posted_by = job_info.get("posted_by")
         if posted_by:
             socketio.emit("new_applicant", application, to=f"user_{posted_by}")
         socketio.emit("new_applicant", application, to="industrys_room")
         socketio.emit("new_applicant", application)
 
-        job_title = (interview.get("job_postings") or {}).get("title", "a posting")
+        job_title = job_info.get("title", "a posting")
         supabase.table("activity_log").insert({
-            "user_id": interview["student_id"], "type": "application_submitted",
-            "title": "Application submitted", "subtitle": job_title,
+            "user_id": interview["student_id"],
+            "type": "application_submitted",
+            "title": "Application submitted",
+            "subtitle": job_title,
         }).execute()
 
     return jsonify({
@@ -609,6 +675,7 @@ def complete_interview(interview_id):
         "application": application,
         "message": "Application submitted!" if passed else
                     f"Score {overall}% did not meet the {PASS_THRESHOLD_PCT}% threshold — application not submitted.",
+        "evaluations": evaluations,
     })
 
 

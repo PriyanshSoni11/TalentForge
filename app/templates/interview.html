@@ -150,10 +150,10 @@
 
             <div class="pt-5 border-t border-brand-100 mt-5 space-y-3">
               <button id="btn-complete-interview" disabled class="w-full bg-ink hover:bg-brand-900 disabled:opacity-40 disabled:hover:bg-ink text-white font-medium py-3 rounded-xl transition text-sm shadow-sm flex items-center justify-center gap-2">
-                <span>Complete Interview</span>
+                <span>Submit & Evaluate Answers</span>
                 <span class="text-xs">&rarr;</span>
               </button>
-              <p id="complete-guidance" class="text-xs text-brand-500 text-center">Record answers to all 10 questions to submit.</p>
+              <p id="complete-guidance" class="text-xs text-brand-500 text-center">Record answers to all questions to submit for AI evaluation.</p>
             </div>
           </div>
 
@@ -171,8 +171,24 @@
       </div>
     </div>
 
+    <!-- Evaluating State -->
+    <div id="evaluating" class="hidden bg-white border border-brand-100 rounded-2xl p-10 md:p-14 text-center max-w-xl mx-auto shadow-sm space-y-6">
+      <div class="relative mx-auto w-16 h-16 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-4 border-brand-100 border-t-brand-600 animate-spin"></div>
+        <span class="text-2xl">&#129302;</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-ink">Evaluating All Answers with AI...</h2>
+        <p class="text-brand-600 text-sm mt-2">Analyzing technical clarity, depth, and communication across all your recorded responses.</p>
+      </div>
+      <div class="w-full bg-brand-50 rounded-full h-2.5 overflow-hidden border border-brand-100">
+        <div class="h-2.5 bg-brand-600 rounded-full animate-pulse w-full"></div>
+      </div>
+      <p class="text-xs text-brand-400">All questions are scored together. This takes just a few seconds.</p>
+    </div>
+
     <!-- Final Result State -->
-    <div id="result" class="hidden bg-white border border-brand-100 rounded-2xl p-8 md:p-12 shadow-sm text-center max-w-2xl mx-auto space-y-6">
+    <div id="result" class="hidden bg-white border border-brand-100 rounded-2xl p-8 md:p-12 shadow-sm text-center max-w-3xl mx-auto space-y-6">
       <!-- Injected dynamically on completion -->
     </div>
   </main>
@@ -250,6 +266,27 @@ async function loadInterview() {
 
     $("job-title").textContent = (interview.job_postings?.title || "Role") + " · Practice Session";
     
+    // If interview is already completed, display full evaluated results directly
+    if (interview.status === "completed") {
+      $("loading").classList.add("hidden");
+      renderResults({
+        overall_score_pct: interview.overall_score_pct,
+        passed: interview.passed,
+        evaluations: questions.map((q, idx) => {
+          const resp = responsesMap[q.id] || {};
+          return {
+            question_id: q.id,
+            question_text: q.question_text,
+            order_index: q.order_index ?? idx,
+            score_pct: resp.score_pct || 80,
+            feedback: resp.feedback || "Response evaluated.",
+            transcript: resp.transcript || ""
+          };
+        })
+      });
+      return;
+    }
+
     // Find first unanswered question
     const firstUnanswered = questions.findIndex(q => !responsesMap[q.id]);
     currentIndex = firstUnanswered !== -1 ? firstUnanswered : 0;
@@ -279,12 +316,17 @@ function renderQuestion() {
   const feedbackBox = $("question-feedback-box");
 
   if (response) {
-    statusPill.textContent = "Answered ✓";
+    statusPill.textContent = "Recorded ✓";
     statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200";
     
     feedbackBox.classList.remove("hidden");
-    $("feedback-score").textContent = `Score: ${response.score_pct || 80}%`;
-    $("feedback-text").textContent = response.feedback || "Good response addressing key aspects of the question.";
+    if (response.score_pct !== null && response.score_pct !== undefined) {
+      $("feedback-score").textContent = `Score: ${response.score_pct}%`;
+      $("feedback-text").textContent = response.feedback || "Good response addressing key aspects of the question.";
+    } else {
+      $("feedback-score").textContent = "Answer Recorded ✓";
+      $("feedback-text").textContent = "Your answer is securely saved. All questions will be evaluated together by AI once you finish the interview.";
+    }
     
     $("btn-start-record").innerHTML = `<span class="h-2.5 w-2.5 rounded-full bg-red-400"></span><span>Re-record Answer</span>`;
   } else {
@@ -346,8 +388,8 @@ function updateProgress() {
   const allAnswered = answeredCount === questions.length && questions.length > 0;
   $("btn-complete-interview").disabled = !allAnswered;
   $("complete-guidance").textContent = allAnswered 
-    ? "All answers recorded! Click above to submit." 
-    : `${questions.length - answeredCount} question(s) remaining before completion.`;
+    ? "All answers recorded! Click above to submit all answers for AI evaluation." 
+    : `${questions.length - answeredCount} question(s) remaining before evaluation.`;
 }
 
 // 6. Recording Handlers (Live camera is kept ON throughout)
@@ -405,14 +447,14 @@ $("btn-stop-record").onclick = () => {
     $("recording-status-msg").innerHTML = `
       <span class="inline-flex items-center gap-1.5 text-brand-700 font-semibold">
         <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        Uploading and scoring answer...
+        Saving recorded answer...
       </span>
     `;
     mediaRecorder.stop();
   }
 };
 
-// 7. Upload & AI Score Response
+// 7. Upload & Save Response (Evaluation deferred until all questions answered)
 async function uploadResponse() {
   const item = questions[currentIndex];
   const blob = new Blob(recordedChunks, { type: "video/webm" });
@@ -436,7 +478,7 @@ async function uploadResponse() {
 
     if (res.ok) {
       responsesMap[item.id] = data;
-      $("recording-status-msg").textContent = "✓ Answer scored and saved!";
+      $("recording-status-msg").textContent = "✓ Answer saved successfully!";
       renderQuestion();
       renderSidebarList();
       updateProgress();
@@ -448,10 +490,10 @@ async function uploadResponse() {
           currentIndex = nextUnanswered;
           renderQuestion();
           renderSidebarList();
-        }, 1200);
+        }, 800);
       }
     } else {
-      $("recording-status-msg").textContent = data.error || "Failed to score answer. You can retry recording.";
+      $("recording-status-msg").textContent = data.error || "Failed to save answer. You can retry recording.";
       $("btn-start-record").disabled = false;
     }
   } catch (err) {
@@ -461,10 +503,16 @@ async function uploadResponse() {
   }
 }
 
-// 8. Complete Interview Session
+// 8. Submit & Evaluate All Answers
 $("btn-complete-interview").onclick = async () => {
-  $("btn-complete-interview").disabled = true;
-  $("btn-complete-interview").innerHTML = `<span>Finalizing Interview...</span>`;
+  const answeredCount = Object.keys(responsesMap).length;
+  if (answeredCount < questions.length) {
+    alert(`Please record answers for all ${questions.length} questions before submitting for evaluation.`);
+    return;
+  }
+
+  $("workspace").classList.add("hidden");
+  $("evaluating").classList.remove("hidden");
 
   try {
     const res = await fetch(`/api/students/interviews/${interviewId}/complete`, {
@@ -473,52 +521,113 @@ $("btn-complete-interview").onclick = async () => {
     });
     const data = await res.json();
 
-    $("workspace").classList.add("hidden");
-    const resultEl = $("result");
-    resultEl.classList.remove("hidden");
+    $("evaluating").classList.add("hidden");
 
-    if (data.passed) {
-      resultEl.innerHTML = `
-        <div class="h-16 w-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-3xl mx-auto mb-4">
-          &#10003;
-        </div>
-        <h1 class="text-3xl font-bold text-ink">Interview Passed!</h1>
-        <p class="text-lg text-brand-700 font-semibold mt-2">Overall Score: ${data.overall_score_pct}%</p>
-        <p class="text-brand-600 text-sm max-w-md mx-auto mt-2">${data.message || "Your application has been officially submitted to the hiring team."}</p>
-        <div class="pt-6 flex justify-center gap-4">
-          <a href="/dashboard/student/applications" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm shadow-sm">
-            View My Applications &rarr;
-          </a>
-          <a href="/dashboard/student/roles" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
-            Explore More Roles
-          </a>
-        </div>
-      `;
-    } else {
-      resultEl.innerHTML = `
-        <div class="h-16 w-16 rounded-full bg-sun-100 text-sun-700 flex items-center justify-center text-3xl mx-auto mb-4">
-          &#128260;
-        </div>
-        <h1 class="text-3xl font-bold text-ink">Interview Completed</h1>
-        <p class="text-lg text-brand-700 font-semibold mt-2">Overall Score: ${data.overall_score_pct}%</p>
-        <p class="text-brand-600 text-sm max-w-md mx-auto mt-2">${data.message || "Score was below the passing threshold. Review recommended learning paths to sharpen your skills before retrying."}</p>
-        <div class="pt-6 flex justify-center gap-4">
-          <a href="/dashboard/student/courses" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm shadow-sm">
-            Explore Learning Paths &rarr;
-          </a>
-          <a href="/dashboard/student/roles" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
-            Explore Other Roles
-          </a>
-        </div>
-      `;
+    if (!res.ok) {
+      alert(data.error || "Could not evaluate interview. Please try again.");
+      $("workspace").classList.remove("hidden");
+      return;
     }
+
+    renderResults(data);
   } catch (err) {
     console.error("Completion error:", err);
     alert("Could not complete interview. Please check your connection and try again.");
-    $("btn-complete-interview").disabled = false;
-    $("btn-complete-interview").innerHTML = `<span>Complete Interview &rarr;</span>`;
+    $("evaluating").classList.add("hidden");
+    $("workspace").classList.remove("hidden");
   }
 };
+
+// 9. Display Evaluated Results & Detailed Breakdown
+function renderResults(data) {
+  $("workspace").classList.add("hidden");
+  if ($("evaluating")) $("evaluating").classList.add("hidden");
+  const resultEl = $("result");
+  resultEl.classList.remove("hidden");
+
+  const passed = data.passed;
+  const overall = data.overall_score_pct;
+  const evaluations = data.evaluations || [];
+
+  let evalListHtml = "";
+  if (evaluations.length) {
+    evalListHtml = `
+      <div class="mt-8 text-left border-t border-brand-100 pt-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-ink">AI Evaluation Breakdown</h3>
+            <p class="text-xs text-brand-500">Comprehensive feedback and scores evaluated across all answered questions.</p>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+            ${evaluations.length} Questions Evaluated
+          </span>
+        </div>
+        <div class="space-y-3">
+          ${evaluations.map((item, idx) => `
+            <div class="border border-brand-100 rounded-xl p-4 bg-brand-50/40 hover:bg-brand-50/70 transition space-y-2">
+              <div class="flex items-start justify-between gap-3">
+                <p class="text-xs font-semibold text-brand-900 leading-snug">
+                  <span class="text-brand-500 font-bold mr-1">Q${idx + 1}.</span> ${item.question_text}
+                </p>
+                <span class="shrink-0 text-xs font-bold px-2.5 py-0.5 rounded-full ${Number(item.score_pct) >= 70 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                  ${item.score_pct}%
+                </span>
+              </div>
+              ${item.feedback ? `<p class="text-xs text-brand-700 leading-relaxed"><strong class="text-brand-900">Feedback:</strong> ${item.feedback}</p>` : ''}
+              ${item.transcript && !item.transcript.startsWith("Response recorded") ? `<p class="text-[11px] text-brand-500 italic leading-relaxed"><strong class="not-italic text-brand-600">Key Points:</strong> ${item.transcript}</p>` : ''}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if (passed) {
+    resultEl.innerHTML = `
+      <div class="h-16 w-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-3xl mx-auto mb-4">
+        &#10003;
+      </div>
+      <h1 class="text-3xl font-bold text-ink">Interview Evaluated &amp; Passed!</h1>
+      <p class="text-lg text-brand-700 font-semibold mt-2">Overall Score: ${overall}%</p>
+      <p class="text-brand-600 text-sm max-w-md mx-auto mt-2">${data.message || "Your verified application has been officially submitted to the hiring team."}</p>
+      <div class="pt-6 flex flex-wrap justify-center gap-4">
+        <a href="/dashboard/student/applications" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm shadow-sm">
+          View My Applications &rarr;
+        </a>
+        <a href="https://intervueai-landing.vercel.app/" target="_blank" rel="noopener noreferrer" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm inline-flex items-center gap-2">
+          <span>Practice on IntervueAI</span>
+          <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+        <a href="/dashboard/student/roles" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
+          Explore More Roles
+        </a>
+      </div>
+      ${evalListHtml}
+    `;
+  } else {
+    resultEl.innerHTML = `
+      <div class="h-16 w-16 rounded-full bg-sun-100 text-sun-700 flex items-center justify-center text-3xl mx-auto mb-4">
+        &#128260;
+      </div>
+      <h1 class="text-3xl font-bold text-ink">Interview Evaluated</h1>
+      <p class="text-lg text-brand-700 font-semibold mt-2">Overall Score: ${overall}%</p>
+      <p class="text-brand-600 text-sm max-w-md mx-auto mt-2">${data.message || "Score was below the passing threshold. Review recommended learning paths to sharpen your skills before retrying."}</p>
+      <div class="pt-6 flex flex-wrap justify-center gap-4">
+        <a href="https://intervueai-landing.vercel.app/" target="_blank" rel="noopener noreferrer" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm shadow-sm inline-flex items-center gap-2">
+          <span>Practice with IntervueAI</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+        <a href="/dashboard/student/courses" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
+          Explore Learning Paths &rarr;
+        </a>
+        <a href="/dashboard/student/roles" class="border border-brand-200 text-brand-700 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition text-sm">
+          Explore Other Roles
+        </a>
+      </div>
+      ${evalListHtml}
+    `;
+  }
+}
 
 loadInterview();
 </script>

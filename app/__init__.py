@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 from flask import request
 
 from app.config import get_config
@@ -65,6 +65,11 @@ def create_app():
     @app.route("/interview/<interview_id>")
     def interview_page(interview_id):
         return render_template("interview.html", interview_id=interview_id)
+
+    @app.route("/practice-interview")
+    @app.route("/dashboard/student/practice-interview")
+    def practice_interview_redirect():
+        return redirect("https://intervueai-landing.vercel.app/", code=302)
 
     @app.route("/profile")
     def profile_page():
