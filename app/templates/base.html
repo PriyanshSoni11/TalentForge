@@ -31,13 +31,13 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body class="bg-offwhite text-brand-900 min-h-screen flex flex-col font-sans">
-  <nav class="bg-white/95 backdrop-blur border-b border-brand-100 px-6 sm:px-10 py-4 flex items-center justify-between sticky top-0 z-50 shadow-xs">
+  <nav class="bg-white/95 backdrop-blur border-b border-brand-100 px-4 sm:px-8 lg:px-10 py-3.5 sm:py-4 sticky top-0 z-50 shadow-xs">
     <div class="max-w-7xl mx-auto w-full flex items-center justify-between">
       <a href="/" aria-label="TalentForge home" class="flex items-center">
-        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-11 md:h-12 w-auto object-contain" />
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-9 sm:h-11 md:h-12 w-auto object-contain" />
       </a>
       
-      <div class="flex items-center gap-6 md:gap-8">
+      <div class="flex items-center gap-3 sm:gap-6 md:gap-8">
         <div class="hidden md:flex items-center gap-2 text-base font-semibold text-brand-800">
           <a href="/student/login" class="px-3.5 py-2 rounded-xl hover:text-brand-950 hover:bg-brand-50 transition">Students</a>
           <a href="https://intervueai-landing.vercel.app/" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl hover:text-brand-950 hover:bg-brand-50 transition flex items-center gap-1.5" title="Practice AI Interview simulator for students">
@@ -48,18 +48,59 @@
           <a href="/mentor/login" class="px-3.5 py-2 rounded-xl hover:text-brand-950 hover:bg-brand-50 transition">Mentors</a>
         </div>
         
-        <div class="flex items-center gap-3">
-          <a href="/student/register" class="bg-brand-700 hover:bg-brand-800 text-white px-5 py-2.5 rounded-xl font-bold text-base shadow-xs hover:shadow-md transition flex items-center gap-1.5">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <a href="/student/register" class="bg-brand-700 hover:bg-brand-800 text-white px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-sm sm:text-base shadow-xs hover:shadow-md transition flex items-center gap-1.5">
             <span>Get Started</span>
             <span class="text-sm">&rarr;</span>
           </a>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button id="mobile-menu-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false" class="md:hidden p-2 rounded-xl text-brand-800 hover:bg-brand-50 hover:text-ink transition flex items-center justify-center border border-brand-200">
+            <svg id="hamburger-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <svg id="close-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobile-menu" class="hidden md:hidden max-w-7xl mx-auto pt-4 pb-2 border-t border-brand-100 mt-3 space-y-2">
+      <a href="/student/login" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-brand-800 font-semibold hover:bg-brand-50 transition">
+        <span>Students</span>
+        <span class="text-xs text-brand-500">Sign in &rarr;</span>
+      </a>
+      <a href="https://intervueai-landing.vercel.app/" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-brand-800 font-semibold hover:bg-brand-50 transition">
+        <span class="flex items-center gap-2">
+          <span>Practice AI Interview</span>
+          <span class="text-[10px] bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded font-bold">AI</span>
+        </span>
+        <span class="text-xs text-brand-500">Launch simulator ↗</span>
+      </a>
+      <a href="/industry/login" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-brand-800 font-semibold hover:bg-brand-50 transition">
+        <span>Companies</span>
+        <span class="text-xs text-brand-500">Post roles &rarr;</span>
+      </a>
+      <a href="/mentor/login" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-brand-800 font-semibold hover:bg-brand-50 transition">
+        <span>Mentors</span>
+        <span class="text-xs text-brand-500">Join network &rarr;</span>
+      </a>
+      <div class="pt-2 border-t border-brand-100 flex flex-col gap-2">
+        <a href="/student/register" class="text-center bg-brand-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm hover:bg-brand-800 transition">
+          Start as Student
+        </a>
+        <a href="/industry/register" class="text-center bg-white border border-brand-200 text-brand-800 font-semibold py-2.5 px-4 rounded-xl text-sm hover:bg-brand-50 transition">
+          Hire Emerging Talent
+        </a>
       </div>
     </div>
   </nav>
 
   <main class="flex-1">
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-[1.1fr_.9fr] gap-12 lg:gap-16 items-center">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-14 lg:pt-20 pb-16 sm:pb-20 lg:pb-24 grid grid-cols-1 lg:grid-cols-[1.1fr_.9fr] gap-12 lg:gap-16 items-center">
       <div class="space-y-6 sm:space-y-8">
         <p class="text-xs sm:text-sm font-bold tracking-[.2em] uppercase text-brand-600">The bridge between potential and opportunity</p>
         <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-brand-900 leading-[1.15]">Build skills. Prove them. Find your next move.</h1>
@@ -199,5 +240,49 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    // Mobile navigation toggle
+    const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const hamburgerIcon = document.getElementById("hamburger-icon");
+    const closeIcon = document.getElementById("close-icon");
+
+    if (mobileMenuToggle && mobileMenu) {
+      function toggleMobileMenu(open) {
+        const isOpen = open !== undefined ? open : mobileMenu.classList.contains("hidden");
+        if (isOpen) {
+          mobileMenu.classList.remove("hidden");
+          hamburgerIcon.classList.add("hidden");
+          closeIcon.classList.remove("hidden");
+          mobileMenuToggle.setAttribute("aria-expanded", "true");
+        } else {
+          mobileMenu.classList.add("hidden");
+          hamburgerIcon.classList.remove("hidden");
+          closeIcon.classList.add("hidden");
+          mobileMenuToggle.setAttribute("aria-expanded", "false");
+        }
+      }
+
+      mobileMenuToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMobileMenu();
+      });
+
+      // Close menu on click outside
+      document.addEventListener("click", (e) => {
+        if (!mobileMenu.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+          toggleMobileMenu(false);
+        }
+      });
+
+      // Close on resize to desktop
+      window.addEventListener("resize", () => {
+        if (window.innerWidth >= 768) {
+          toggleMobileMenu(false);
+        }
+      });
+    }
+  </script>
 </body>
 </html>

@@ -34,7 +34,7 @@
       </div>
       <p class="text-sm sm:text-base text-brand-600">Create, manage, and track candidate applications across all your active roles.</p>
     </div>
-    <button id="open-create-job-btn" type="button" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95 cursor-pointer">
+    <button id="open-create-job-btn" type="button" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95 cursor-pointer w-full sm:w-auto">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -51,14 +51,14 @@
       </svg>
       <input id="search-input" type="text" placeholder="Search postings by role title, location, or skill…" class="w-full pl-10 pr-4 py-2 border border-brand-200 rounded-xl text-sm bg-offwhite/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent transition" />
     </div>
-    <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-      <select id="filter-type" class="text-sm bg-white border border-brand-200 rounded-xl px-3 py-2 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 flex-wrap sm:flex-nowrap">
+      <select id="filter-type" class="flex-1 sm:flex-none text-sm bg-white border border-brand-200 rounded-xl px-3 py-2 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400">
         <option value="all">All Types</option>
         <option value="job">Jobs</option>
         <option value="internship">Internships</option>
         <option value="apprenticeship">Apprenticeships</option>
       </select>
-      <select id="filter-status" class="text-sm bg-white border border-brand-200 rounded-xl px-3 py-2 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400">
+      <select id="filter-status" class="flex-1 sm:flex-none text-sm bg-white border border-brand-200 rounded-xl px-3 py-2 text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400">
         <option value="all">All Statuses</option>
         <option value="open">Open</option>
         <option value="closed">Closed</option>
@@ -78,18 +78,18 @@
 </div>
 
 <!-- Create / Edit Job Dialog Modal -->
-<div id="job-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
+<div id="job-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="job-modal-backdrop"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-brand-100 animate-in fade-in zoom-in-95 duration-150">
-    <div class="px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
+    <div class="px-4 sm:px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
       <div class="flex items-center gap-2">
         <div class="h-8 w-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">✦</div>
-        <h2 id="job-modal-title" class="text-lg font-bold text-ink">Post a New Opportunity</h2>
+        <h2 id="job-modal-title" class="text-base sm:text-lg font-bold text-ink">Post a New Opportunity</h2>
       </div>
       <button id="close-job-modal" type="button" aria-label="Close dialog" class="text-brand-400 hover:text-ink text-2xl leading-none transition cursor-pointer">&times;</button>
     </div>
 
-    <form id="job-form" class="p-6 overflow-y-auto space-y-4 flex-1">
+    <form id="job-form" class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
       <input type="hidden" id="job-form-id" value="" />
 
       <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-xl text-xs"></div>
@@ -124,7 +124,7 @@
       <div>
         <label for="job-location-input" class="block text-xs font-semibold uppercase tracking-wider text-brand-700 mb-1.5">Workplace Location <span class="text-red-500">*</span></label>
         <input id="job-location-input" required type="text" placeholder="e.g., Remote, San Francisco, CA, Hybrid - New York" class="w-full px-3.5 py-2.5 border border-brand-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
-        <div class="flex items-center gap-1.5 mt-2">
+        <div class="flex flex-wrap items-center gap-1.5 mt-2">
           <span class="text-[11px] text-brand-400 font-medium">Quick presets:</span>
           <button type="button" onclick="setLocationPreset('Remote')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">Remote</button>
           <button type="button" onclick="setLocationPreset('Hybrid')" class="text-[11px] bg-brand-50 hover:bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md transition cursor-pointer">Hybrid</button>
@@ -154,11 +154,11 @@
       </div>
     </form>
 
-    <div class="px-6 py-4 border-t border-brand-100 bg-offwhite/50 flex items-center justify-end gap-3">
-      <button id="cancel-job-modal" type="button" class="px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition cursor-pointer">
+    <div class="px-4 sm:px-6 py-4 border-t border-brand-100 bg-offwhite/50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3">
+      <button id="cancel-job-modal" type="button" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition cursor-pointer text-center">
         Cancel
       </button>
-      <button id="submit-job-btn" type="button" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center gap-2 cursor-pointer">
+      <button id="submit-job-btn" type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
         <span id="submit-job-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span id="submit-job-text">Save Posting</span>
       </button>
@@ -167,26 +167,26 @@
 </div>
 
 <!-- Delete Confirmation Dialog Modal -->
-<div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+<div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="delete-modal-backdrop"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-brand-100 text-center animate-in fade-in zoom-in-95 duration-150">
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 border border-brand-100 text-center animate-in fade-in zoom-in-95 duration-150">
     <div class="h-12 w-12 rounded-full bg-red-50 text-red-600 mx-auto mb-4 flex items-center justify-center text-xl">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
       </svg>
     </div>
-    <h3 class="text-xl font-bold text-ink mb-2">Delete Job Posting?</h3>
-    <p class="text-sm text-brand-600 leading-relaxed mb-1">
+    <h3 class="text-lg sm:text-xl font-bold text-ink mb-2">Delete Job Posting?</h3>
+    <p class="text-xs sm:text-sm text-brand-600 leading-relaxed mb-1">
       Are you sure you want to delete <strong id="delete-job-title" class="text-ink font-semibold">this posting</strong>?
     </p>
     <p class="text-xs text-red-600 mb-6 bg-red-50 py-1.5 px-3 rounded-lg border border-red-100">
       This will permanently delete the post and all candidate applications submitted for it.
     </p>
-    <div class="flex items-center gap-3">
-      <button id="cancel-delete-btn" type="button" class="flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition cursor-pointer">
+    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+      <button id="cancel-delete-btn" type="button" class="w-full sm:flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition cursor-pointer">
         Cancel
       </button>
-      <button id="confirm-delete-btn" type="button" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+      <button id="confirm-delete-btn" type="button" class="w-full sm:flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
         <span id="delete-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span id="delete-btn-text">Delete Posting</span>
       </button>
@@ -195,13 +195,13 @@
 </div>
 
 <!-- Applicants Dialog Modal with Real-time Selection -->
-<div id="applicants-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="applicants-modal-title">
+<div id="applicants-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="applicants-modal-title">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="applicants-modal-backdrop"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-brand-100 animate-in fade-in zoom-in-95 duration-150">
-    <div class="px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
+    <div class="px-4 sm:px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
       <div>
         <div class="flex items-center gap-2">
-          <h2 id="applicants-modal-title" class="text-xl font-bold text-ink">Applicants</h2>
+          <h2 id="applicants-modal-title" class="text-lg sm:text-xl font-bold text-ink">Applicants</h2>
           <span id="applicants-count-badge" class="bg-brand-100 text-brand-800 text-xs px-2.5 py-0.5 rounded-full font-bold">0</span>
         </div>
         <p id="applicants-modal-subtitle" class="text-xs text-brand-600 mt-0.5">Select candidates and manage application statuses in real time</p>
@@ -210,7 +210,7 @@
     </div>
 
     <!-- Candidate Filter Tabs in Modal -->
-    <div class="px-6 py-2.5 border-b border-brand-100 bg-white flex items-center gap-2 overflow-x-auto text-xs">
+    <div class="px-4 sm:px-6 py-2.5 border-b border-brand-100 bg-white flex items-center gap-2 overflow-x-auto text-xs whitespace-nowrap">
       <span class="text-brand-400 font-semibold uppercase tracking-wider text-[10px]">Filter:</span>
       <button type="button" onclick="filterModalApplicants('all')" id="modal-tab-all" class="modal-filter-tab px-3 py-1 rounded-lg bg-brand-50 text-brand-800 font-bold">All (<span id="modal-cnt-all">0</span>)</button>
       <button type="button" onclick="filterModalApplicants('shortlisted')" id="modal-tab-shortlisted" class="modal-filter-tab px-3 py-1 rounded-lg text-brand-600 hover:bg-brand-50 font-medium">Shortlisted ⭐ (<span id="modal-cnt-shortlisted">0</span>)</button>
@@ -219,14 +219,14 @@
     </div>
 
     <!-- Candidate List -->
-    <div class="overflow-y-auto flex-1 p-6 space-y-3.5" id="applicants-list">
+    <div class="overflow-y-auto flex-1 p-4 sm:p-6 space-y-3.5" id="applicants-list">
       <p class="text-brand-600 text-sm">Loading applicants...</p>
     </div>
   </div>
 </div>
 
 <!-- Toast Notification -->
-<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-ink text-white text-sm font-medium px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all">
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-ink text-white text-xs sm:text-sm font-medium px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl shadow-2xl flex items-center justify-center gap-2 transition-all w-[calc(100vw-2rem)] sm:w-auto max-w-md text-center">
   <span id="toast-icon">✓</span>
   <span id="toast-msg">Action completed</span>
 </div>

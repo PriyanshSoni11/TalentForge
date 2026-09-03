@@ -25,13 +25,13 @@
 <body class="bg-offwhite text-ink min-h-screen flex flex-col">
 
   <!-- Navigation Header -->
-  <header class="bg-white border-b border-brand-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-    <a href="/dashboard/student" class="flex items-center gap-3">
-      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-8 w-auto" />
-      <span class="text-xs uppercase tracking-wider font-bold bg-brand-50 text-brand-700 px-2.5 py-0.5 rounded-full border border-brand-100">AI Interview</span>
+  <header class="bg-white border-b border-brand-100 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-30">
+    <a href="/dashboard/student" class="flex items-center gap-2 sm:gap-3">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="TalentForge" class="h-7 sm:h-8 w-auto" />
+      <span class="text-[11px] sm:text-xs uppercase tracking-wider font-bold bg-brand-50 text-brand-700 px-2 sm:px-2.5 py-0.5 rounded-full border border-brand-100">AI Interview</span>
     </a>
-    <div class="flex items-center gap-4">
-      <div id="media-indicator" class="flex items-center gap-2 text-xs font-medium text-brand-700 bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">
+    <div class="flex items-center gap-3 sm:gap-4">
+      <div id="media-indicator" class="hidden sm:flex items-center gap-2 text-xs font-medium text-brand-700 bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">
         <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
         <span>Camera & Mic Active</span>
       </div>
@@ -94,15 +94,15 @@
               </span>
             </div>
 
-            <div class="absolute bottom-4 left-4 right-4 bg-ink/75 backdrop-blur border border-white/10 text-white px-4 py-2.5 rounded-xl text-xs flex items-center justify-between">
+            <div class="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 bg-ink/75 backdrop-blur border border-white/10 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <span id="camera-status-text">Camera & microphone are live and streaming</span>
               <span class="text-brand-300 font-medium">Easy Difficulty · 10 Questions</span>
             </div>
           </div>
 
           <!-- Current Question Card -->
-          <div class="bg-white border border-brand-100 rounded-2xl p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between border-b border-brand-100 pb-3">
+          <div class="bg-white border border-brand-100 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-brand-100 pb-3 gap-1 sm:gap-0">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold uppercase tracking-wider text-brand-500" id="question-index-label">Question 1 of 10</span>
                 <span id="question-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200">Unanswered</span>
@@ -110,7 +110,7 @@
               <span class="text-xs text-brand-400">Speak clearly with concrete examples</span>
             </div>
 
-            <h2 id="current-question-text" class="text-lg md:text-xl font-bold text-ink leading-relaxed">
+            <h2 id="current-question-text" class="text-base sm:text-lg md:text-xl font-bold text-ink leading-relaxed">
               Loading question...
             </h2>
 
@@ -124,18 +124,18 @@
             </div>
 
             <!-- Controls -->
-            <div class="pt-2 flex flex-wrap items-center gap-3">
-              <button id="btn-start-record" class="bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3 rounded-xl transition text-sm flex items-center gap-2 shadow-sm">
+            <div class="pt-2 flex flex-col sm:flex-row sm:items-center gap-3">
+              <button id="btn-start-record" class="w-full sm:w-auto bg-brand-700 hover:bg-brand-800 text-white font-medium px-5 sm:px-6 py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer">
                 <span class="h-2.5 w-2.5 rounded-full bg-red-400"></span>
                 <span>Start Recording Answer</span>
               </button>
 
-              <button id="btn-stop-record" disabled class="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition text-sm flex items-center gap-2 shadow-sm">
+              <button id="btn-stop-record" disabled class="w-full sm:w-auto bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-red-600 text-white font-medium px-5 sm:px-6 py-3 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer">
                 <span class="h-2.5 w-2.5 rounded-sm bg-white"></span>
                 <span>Stop & Submit Answer</span>
               </button>
 
-              <span id="recording-status-msg" class="text-xs text-brand-600 font-medium"></span>
+              <span id="recording-status-msg" class="text-xs text-brand-600 font-medium text-center sm:text-left"></span>
             </div>
           </div>
         </section>
@@ -172,13 +172,13 @@
     </div>
 
     <!-- Evaluating State -->
-    <div id="evaluating" class="hidden bg-white border border-brand-100 rounded-2xl p-10 md:p-14 text-center max-w-xl mx-auto shadow-sm space-y-6">
+    <div id="evaluating" class="hidden bg-white border border-brand-100 rounded-2xl p-6 sm:p-10 md:p-14 text-center max-w-xl mx-auto shadow-sm space-y-6">
       <div class="relative mx-auto w-16 h-16 flex items-center justify-center">
         <div class="absolute inset-0 rounded-full border-4 border-brand-100 border-t-brand-600 animate-spin"></div>
         <span class="text-2xl">&#129302;</span>
       </div>
       <div>
-        <h2 class="text-2xl font-bold text-ink">Evaluating All Answers with AI...</h2>
+        <h2 class="text-xl sm:text-2xl font-bold text-ink">Evaluating All Answers with AI...</h2>
         <p class="text-brand-600 text-sm mt-2">Analyzing technical clarity, depth, and communication across all your recorded responses.</p>
       </div>
       <div class="w-full bg-brand-50 rounded-full h-2.5 overflow-hidden border border-brand-100">
@@ -188,7 +188,7 @@
     </div>
 
     <!-- Final Result State -->
-    <div id="result" class="hidden bg-white border border-brand-100 rounded-2xl p-8 md:p-12 shadow-sm text-center max-w-3xl mx-auto space-y-6">
+    <div id="result" class="hidden bg-white border border-brand-100 rounded-2xl p-5 sm:p-8 md:p-12 shadow-sm text-center max-w-3xl mx-auto space-y-6">
       <!-- Injected dynamically on completion -->
     </div>
   </main>

@@ -19,31 +19,31 @@
 <div class="space-y-6">
   <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
     <div>
-      <p class="text-sm font-semibold text-brand-600 mb-2">Meet emerging talent</p>
-      <h1 class="text-3xl font-bold mb-2">Campus events</h1>
-      <p class="text-brand-600">Host recruitment fairs and workshops for students.</p>
+      <p class="text-xs sm:text-sm font-semibold text-brand-600 mb-2">Meet emerging talent</p>
+      <h1 class="text-2xl sm:text-3xl font-bold mb-2">Campus events</h1>
+      <p class="text-sm sm:text-base text-brand-600">Host recruitment fairs and workshops for students.</p>
     </div>
-    <button id="host-event-btn" class="bg-ink text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-900 transition">Host an event</button>
+    <button id="host-event-btn" class="w-full sm:w-auto bg-ink text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-brand-900 transition text-center shadow-sm">Host an event</button>
   </div>
-  <div id="events-grid" class="grid md:grid-cols-2 gap-5">
+  <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
     <p class="text-brand-600">Loading events...</p>
   </div>
 </div>
 
 <!-- Event Modal -->
-<div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+<div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
   <div class="absolute inset-0 bg-ink/30 backdrop-blur-sm" id="event-modal-backdrop"></div>
-  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-    <h2 class="text-xl font-bold mb-4">Host an Event</h2>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-4 sm:p-6 border border-brand-100 max-h-[90vh] overflow-y-auto">
+    <h2 class="text-lg sm:text-xl font-bold mb-4 text-ink">Host an Event</h2>
     <div class="space-y-4">
       <input id="event-title" placeholder="Event title" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
       <textarea id="event-description" placeholder="Description" rows="3" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"></textarea>
       <input id="event-location" placeholder="Location or meeting link" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
       <input id="event-starts" type="datetime-local" class="w-full px-3 py-2 border border-brand-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-300" />
     </div>
-    <div class="mt-6 flex justify-end gap-3">
-      <button id="close-event-modal" class="px-4 py-2 text-sm font-medium text-brand-600 hover:text-brand-800 transition">Cancel</button>
-      <button id="submit-event" class="px-4 py-2 text-sm font-medium bg-brand-700 text-white rounded-lg hover:bg-brand-800 transition">Create Event</button>
+    <div class="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3">
+      <button id="close-event-modal" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-brand-600 hover:text-brand-800 transition text-center">Cancel</button>
+      <button id="submit-event" class="w-full sm:w-auto px-5 py-2.5 text-sm font-medium bg-brand-700 text-white rounded-xl hover:bg-brand-800 transition shadow-sm text-center">Create Event</button>
     </div>
   </div>
 </div>

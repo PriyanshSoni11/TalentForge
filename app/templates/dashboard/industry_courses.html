@@ -34,7 +34,7 @@
       </div>
       <p class="text-sm sm:text-base text-brand-600">Publish and manage curated training courses to help candidates build essential job skills.</p>
     </div>
-    <button id="open-create-course-btn" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95">
+    <button id="open-create-course-btn" class="inline-flex items-center justify-center gap-2 bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-brand-900 transition shadow-sm whitespace-nowrap active:scale-95 w-full sm:w-auto">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -54,18 +54,18 @@
 </div>
 
 <!-- Course Modal (Create & Edit) -->
-<div id="course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+<div id="course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="course-modal-backdrop"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-brand-100 animate-in fade-in zoom-in-95 duration-150">
-    <div class="px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
+    <div class="px-4 sm:px-6 py-4 border-b border-brand-100 flex items-center justify-between bg-offwhite/50">
       <div class="flex items-center gap-2">
         <div class="h-8 w-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">📚</div>
-        <h2 id="course-modal-title" class="text-lg font-bold text-ink">Publish a Course</h2>
+        <h2 id="course-modal-title" class="text-base sm:text-lg font-bold text-ink">Publish a Course</h2>
       </div>
       <button id="close-course-modal" type="button" class="text-brand-400 hover:text-ink text-2xl leading-none transition">&times;</button>
     </div>
 
-    <form id="course-form" class="p-6 overflow-y-auto space-y-4 flex-1">
+    <form id="course-form" class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
       <input type="hidden" id="course-form-id" value="" />
       <div id="course-form-error" class="hidden bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-xl text-xs"></div>
 
@@ -90,11 +90,11 @@
       </div>
     </form>
 
-    <div class="px-6 py-4 border-t border-brand-100 bg-offwhite/50 flex items-center justify-end gap-3">
-      <button id="cancel-course-modal" type="button" class="px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition">
+    <div class="px-4 sm:px-6 py-4 border-t border-brand-100 bg-offwhite/50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3">
+      <button id="cancel-course-modal" type="button" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition text-center">
         Cancel
       </button>
-      <button id="submit-course-btn" type="button" class="px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center gap-2">
+      <button id="submit-course-btn" type="button" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2">
         <span id="submit-course-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span id="submit-course-text">Publish Course</span>
       </button>
@@ -103,23 +103,23 @@
 </div>
 
 <!-- Delete Course Modal -->
-<div id="delete-course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+<div id="delete-course-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-ink/40 backdrop-blur-xs" id="delete-course-modal-backdrop"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-brand-100 text-center animate-in fade-in zoom-in-95 duration-150">
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 border border-brand-100 text-center animate-in fade-in zoom-in-95 duration-150">
     <div class="h-12 w-12 rounded-full bg-red-50 text-red-600 mx-auto mb-4 flex items-center justify-center text-xl">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"></path>
       </svg>
     </div>
-    <h3 class="text-xl font-bold text-ink mb-2">Delete Training Course?</h3>
-    <p class="text-sm text-brand-600 leading-relaxed mb-6">
+    <h3 class="text-lg sm:text-xl font-bold text-ink mb-2">Delete Training Course?</h3>
+    <p class="text-xs sm:text-sm text-brand-600 leading-relaxed mb-6">
       Are you sure you want to delete <strong id="delete-course-title" class="text-ink font-semibold">this course</strong>?
     </p>
-    <div class="flex items-center gap-3">
-      <button id="cancel-delete-course-btn" type="button" class="flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition">
+    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
+      <button id="cancel-delete-course-btn" type="button" class="w-full sm:flex-1 py-2.5 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-sm font-medium transition text-center">
         Cancel
       </button>
-      <button id="confirm-delete-course-btn" type="button" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2">
+      <button id="confirm-delete-course-btn" type="button" class="w-full sm:flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition shadow-sm flex items-center justify-center gap-2">
         <span id="delete-course-spinner" class="hidden animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span id="delete-course-btn-text">Delete Course</span>
       </button>

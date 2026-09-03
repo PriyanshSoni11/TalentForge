@@ -13,59 +13,59 @@
 {% block content %}
 <div class="max-w-3xl space-y-6">
   <div>
-    <p class="text-sm font-semibold text-brand-600 mb-2">Account details</p>
-    <h1 class="text-3xl font-bold mb-2">Your profile</h1>
-    <p class="text-brand-600">Keep the information people use to understand your goals and experience up to date.</p>
+    <p class="text-xs sm:text-sm font-semibold text-brand-600 mb-1 sm:mb-2">Account details</p>
+    <h1 class="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Your profile</h1>
+    <p class="text-sm sm:text-base text-brand-600">Keep the information people use to understand your goals and experience up to date.</p>
   </div>
 
-  <form id="profile-form" class="bg-white border border-brand-100 rounded-xl p-6 space-y-5">
-    <div class="grid md:grid-cols-2 gap-5">
+  <form id="profile-form" class="bg-white border border-brand-100 rounded-2xl p-4 sm:p-6 space-y-5 shadow-xs">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
       <label class="block text-sm text-brand-800">Full name
-        <input id="name" required maxlength="120" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+        <input id="name" required maxlength="120" class="w-full mt-1 px-3.5 py-2.5 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-300 text-sm" />
       </label>
       <label class="block text-sm text-brand-800">Email
-        <input id="email" readonly class="w-full mt-1 px-3 py-2 border border-brand-100 bg-brand-50 text-brand-500 rounded-lg" />
+        <input id="email" readonly class="w-full mt-1 px-3.5 py-2.5 border border-brand-100 bg-brand-50 text-brand-500 rounded-xl text-sm" />
       </label>
     </div>
 
     <div id="student-fields" class="hidden">
       <label class="block text-sm text-brand-800">College or university
-        <input id="college-name" maxlength="160" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+        <input id="college-name" maxlength="160" class="w-full mt-1 px-3.5 py-2.5 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-300 text-sm" />
       </label>
     </div>
 
     <div id="mentor-fields" class="hidden space-y-5 border-t border-brand-100 pt-5">
       <div>
         <h2 class="font-semibold text-ink">Mentor profile</h2>
-        <p class="text-sm text-brand-600 mt-1">These details are shown to students when you accept mentorship requests.</p>
+        <p class="text-xs sm:text-sm text-brand-600 mt-1">These details are shown to students when you accept mentorship requests.</p>
       </div>
       <label class="block text-sm text-brand-800">Professional headline
-        <input id="headline" maxlength="120" placeholder="e.g. Product designer at Northstar" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+        <input id="headline" maxlength="120" placeholder="e.g. Product designer at Northstar" class="w-full mt-1 px-3.5 py-2.5 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-300 text-sm" />
       </label>
       <label class="block text-sm text-brand-800">Short bio
-        <textarea id="bio" rows="4" maxlength="1000" placeholder="What can you help students learn?" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300"></textarea>
+        <textarea id="bio" rows="4" maxlength="1000" placeholder="What can you help students learn?" class="w-full mt-1 px-3.5 py-2.5 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-300 text-sm"></textarea>
       </label>
-      <div class="grid md:grid-cols-2 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
         <label class="block text-sm text-brand-800">Expertise
-          <input id="expertise" placeholder="Python, Design, Leadership" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+          <input id="expertise" placeholder="Python, Design, Leadership" class="w-full mt-1 px-3.5 py-2.5 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-300 text-sm" />
           <span class="text-xs text-brand-500">Separate skills with commas.</span>
         </label>
         <label class="block text-sm text-brand-800">Availability
-          <input id="availability" maxlength="80" placeholder="Open to requests" class="w-full mt-1 px-3 py-2 border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-300" />
+          <input id="availability" maxlength="80" placeholder="Open to requests" class="w-full mt-1 px-3.5 py-2.5 border border-brand-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-300 text-sm" />
         </label>
       </div>
-      <div class="flex items-center justify-between mt-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
         <label class="flex items-center gap-2 text-sm text-brand-800">
-          <input id="accepting-requests" type="checkbox" class="h-4 w-4 accent-brand-700" />
+          <input id="accepting-requests" type="checkbox" class="h-4 w-4 accent-brand-700 rounded" />
           Accept new mentorship requests
         </label>
-        <button id="delete-mentor-profile" type="button" class="text-sm text-red-600 hover:text-red-800 font-medium hidden">Delete mentor profile</button>
+        <button id="delete-mentor-profile" type="button" class="text-sm text-red-600 hover:text-red-800 font-medium hidden text-left sm:text-right">Delete mentor profile</button>
       </div>
     </div>
 
-    <div class="flex items-center justify-between gap-4 border-t border-brand-100 pt-5">
-      <p id="profile-status" class="text-sm" aria-live="polite"></p>
-      <button id="save-profile" type="submit" class="bg-brand-700 text-white px-5 py-2 rounded-lg hover:bg-brand-800 font-medium">Save profile</button>
+    <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-t border-brand-100 pt-5">
+      <p id="profile-status" class="text-xs sm:text-sm" aria-live="polite"></p>
+      <button id="save-profile" type="submit" class="w-full sm:w-auto bg-brand-700 text-white px-6 py-2.5 rounded-xl hover:bg-brand-800 font-semibold text-sm shadow-xs transition cursor-pointer text-center">Save profile</button>
     </div>
   </form>
 </div>
